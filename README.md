@@ -48,7 +48,8 @@ zesit-admin/
 ## Prérequis
 
 - macOS + Xcode 26.x (clang/Kotlin-Native toolchain iOS)
-- JDK 17 (`/usr/bin/java` suffit)
+- JDK 17+ : SDKMAN (`sdk install java` — voir `.sdkmanrc` : `java=17.0.14-jbr`),
+  le JBR d'Android Studio, ou n'importe quel JDK (`/usr/bin/java` suffit)
 - Android SDK (`ANDROID_HOME` renseigné) pour la cible Android
 - Gradle : le wrapper est fourni (`gradle/wrapper/gradle-wrapper.jar` +
   `gradle-wrapper.properties`, Gradle 8.14.3). Si le jar est absent :
@@ -79,29 +80,25 @@ Xcode exécute les Run Script (dont notre phase « Gradle build ») avec un **PA
 minimal** (`/usr/bin:/bin:/usr/sbin:/sbin`), sans ton `.zshrc` : un JDK installé
 via Homebrew, JetBrains Toolbox ou SDKMAN est alors invisible pour `./gradlew`.
 
-La phase appelle `iosApp/iosApp/gradle-build.sh`, qui résout un JDK dans l'ordre :
-1. `java` déjà dans le PATH ;
-2. `/usr/libexec/java_home` (mécanisme Apple) ;
-3. préfixes Homebrew (`/opt/homebrew/opt/openjdk@17`, …) ;
-4. `/Library/Java/JavaVirtualMachines/*/Contents/Home` (JDK installés par .dmg).
+La phase « Gradle build » du projet Xcode résout donc elle-même un JDK et
+exporte `JAVA_HOME` (même approche que l'app ToyotaObd), dans l'ordre :
+1. `$JAVA_HOME` déjà défini dans l'environnement ;
+2. `$HOME/.sdkman/candidates/java/current` (SDKMAN — `.sdkmanrc` du projet) ;
+3. le JBR d'Android Studio (`/Applications/Android Studio.app/Contents/jbr/Contents/Home`) ;
+4. `/usr/libexec/java_home` en dernier recours (JVMs enregistrées par macOS).
 
-Si toujours rien (« Unable to locate Java Runtime » = aucun JDK enregistré sur
-la machine), installez un JDK 17+ **enregistré** :
+`gradlew` est le wrapper Gradle standard : il lance `$JAVA_HOME/bin/java`
+(inutile de modifier le PATH). Test manuel de la phase en conditions Xcode :
 
 ```bash
-# Option A — Homebrew (Apple Silicon : /opt/homebrew, Intel : /usr/local)
-brew install openjdk@17
-sudo ln -sfn "$(brew --prefix openjdk@17)/libexec/openjdk.jdk" \
-  /Library/Java/JavaVirtualMachines/openjdk-17.jdk
-/usr/libexec/java_home        # doit répondre .../openjdk-17.jdk/Contents/Home
-
-# Option B — .dmg Adoptium Temurin 17 (s'installe direct dans
-# /Library/Java/JavaVirtualMachines) : https://adoptium.net/temurin/releases/
+env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME="$HOME" \
+  SRCROOT="$PWD/iosApp" sh -c 'cd "$SRCROOT/.." && ./gradlew --version'
 ```
 
-Repli manuel : `org.gradle.java.home=/Library/Java/JavaVirtualMachines/<jdk>.jdk/Contents/Home`
-dans `zesit-admin/gradle.properties` (lu aussi par `iosApp/iosApp/gradle-build.sh`).
-`gradlew` applique en outre le fallback `java_home` quand on l'appelle à la main.
+Si aucun des 4 chemins ne fournit de JDK, installez-en un : SDKMAN
+(`sdk install java 17.0.14-jbr`), le JBR d'Android Studio, ou un JDK 17+
+enregistré (`/usr/libexec/java_home` doit répondre, ex. .dmg Temurin ou
+`brew install openjdk@17` + lien dans `/Library/Java/JavaVirtualMachines`).
 
 ## Configurer l'app (premier lancement)
 

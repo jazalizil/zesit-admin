@@ -1,0 +1,4 @@
+package com.zesit.admin.apns
+
+// Pas d'APNs sur Android : valeur neutre (jamais utilisée, le bridge APNs est iOS-only).
+actual fun apnsEnvironment(): String = "production"

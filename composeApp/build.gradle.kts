@@ -41,7 +41,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.zesit.admin"
+    namespace = "fr.zesit.admin"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {

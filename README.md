@@ -85,11 +85,23 @@ La phase appelle `iosApp/iosApp/gradle-build.sh`, qui résout un JDK dans l'ordr
 3. préfixes Homebrew (`/opt/homebrew/opt/openjdk@17`, …) ;
 4. `/Library/Java/JavaVirtualMachines/*/Contents/Home` (JDK installés par .dmg).
 
-Si toujours rien : installez un JDK 17+ visible de `/usr/libexec/java_home`
-(ex. `brew install openjdk@17` puis lien dans `/Library/Java/JavaVirtualMachines/`),
-ou renseignez `org.gradle.java.home=/Library/Java/JavaVirtualMachines/<jdk>.jdk/Contents/Home`
-dans `zesit-admin/gradle.properties`. `gradlew` applique aussi le fallback
-`java_home` quand on l'appelle à la main.
+Si toujours rien (« Unable to locate Java Runtime » = aucun JDK enregistré sur
+la machine), installez un JDK 17+ **enregistré** :
+
+```bash
+# Option A — Homebrew (Apple Silicon : /opt/homebrew, Intel : /usr/local)
+brew install openjdk@17
+sudo ln -sfn "$(brew --prefix openjdk@17)/libexec/openjdk.jdk" \
+  /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+/usr/libexec/java_home        # doit répondre .../openjdk-17.jdk/Contents/Home
+
+# Option B — .dmg Adoptium Temurin 17 (s'installe direct dans
+# /Library/Java/JavaVirtualMachines) : https://adoptium.net/temurin/releases/
+```
+
+Repli manuel : `org.gradle.java.home=/Library/Java/JavaVirtualMachines/<jdk>.jdk/Contents/Home`
+dans `zesit-admin/gradle.properties` (lu aussi par `iosApp/iosApp/gradle-build.sh`).
+`gradlew` applique en outre le fallback `java_home` quand on l'appelle à la main.
 
 ## Configurer l'app (premier lancement)
 

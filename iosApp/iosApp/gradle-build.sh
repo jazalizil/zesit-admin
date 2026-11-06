@@ -39,6 +39,17 @@ if ! command -v java >/dev/null 2>&1; then
     done
 fi
 
+# Dernier recours : org.gradle.java.home dans ../gradle.properties
+if ! command -v java >/dev/null 2>&1; then
+    GP="${SRCROOT}/../gradle.properties"
+    if [ -f "$GP" ]; then
+        JH=$(grep -E '^org\.gradle\.java\.home' "$GP" | head -1 | cut -d= -f2- | sed 's/\\//g' | tr -d '[:space:]')
+        if [ -n "$JH" ] && [ -x "$JH/bin/java" ]; then
+            export PATH="$JH/bin:$PATH"
+        fi
+    fi
+fi
+
 if ! command -v java >/dev/null 2>&1; then
     echo "ERREUR: aucun JDK trouve dans le PATH minimal de Xcode."
     echo "  - installez un JDK 17+ (ex: brew install openjdk@17, puis 'sudo ln -sfn \$(brew --prefix openjdk@17)/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk')"

@@ -73,6 +73,24 @@ open iosApp/iosApp.xcodeproj
 # puis Run (⌘R). Le device token APNs n'est dispo que sur device physique.
 ```
 
+## Dépannage Xcode : « java: command not found »
+
+Xcode exécute les Run Script (dont notre phase « Gradle build ») avec un **PATH
+minimal** (`/usr/bin:/bin:/usr/sbin:/sbin`), sans ton `.zshrc` : un JDK installé
+via Homebrew, JetBrains Toolbox ou SDKMAN est alors invisible pour `./gradlew`.
+
+La phase appelle `iosApp/iosApp/gradle-build.sh`, qui résout un JDK dans l'ordre :
+1. `java` déjà dans le PATH ;
+2. `/usr/libexec/java_home` (mécanisme Apple) ;
+3. préfixes Homebrew (`/opt/homebrew/opt/openjdk@17`, …) ;
+4. `/Library/Java/JavaVirtualMachines/*/Contents/Home` (JDK installés par .dmg).
+
+Si toujours rien : installez un JDK 17+ visible de `/usr/libexec/java_home`
+(ex. `brew install openjdk@17` puis lien dans `/Library/Java/JavaVirtualMachines/`),
+ou renseignez `org.gradle.java.home=/Library/Java/JavaVirtualMachines/<jdk>.jdk/Contents/Home`
+dans `zesit-admin/gradle.properties`. `gradlew` applique aussi le fallback
+`java_home` quand on l'appelle à la main.
+
 ## Configurer l'app (premier lancement)
 
 1. Ouvrir les réglages (⚙) :

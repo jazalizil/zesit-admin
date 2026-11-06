@@ -32,6 +32,7 @@
 
 /* Begin PBXFileReference section */
 		C0DE00000000000000000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C0DE0000000000000000001A /* gradle-build.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = gradle-build.sh; sourceTree = "<group>"; };
 		C0DE00000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000013 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -69,6 +70,7 @@
 				C0DE00000000000000000014 /* Assets.xcassets */,
 				C0DE00000000000000000013 /* iosApp.swift */,
 				C0DE00000000000000000011 /* AppDelegate.swift */,
+				C0DE0000000000000000001A /* gradle-build.sh */,
 				C0DE00000000000000000012 /* ContentView.swift */,
 				C0DE00000000000000000017 /* Info.plist */,
 				C0DE00000000000000000018 /* iosApp.entitlements */,
@@ -181,7 +183,10 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/../gradlew\" -p \"${SRCROOT}/..\" :composeApp:embedAndSignAppleFrameworkForXcode\n";
+			// Délégué à iosApp/gradle-build.sh : résout un JDK (Xcode lance les
+			// Run Script avec un PATH minimal, "java" peut être introuvable)
+			// puis appelle ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
+			shellScript = "\"${SRCROOT}/iosApp/gradle-build.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

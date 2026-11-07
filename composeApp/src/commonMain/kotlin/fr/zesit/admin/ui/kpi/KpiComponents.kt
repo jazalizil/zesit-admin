@@ -37,12 +37,23 @@ import kotlin.math.roundToInt
 
 // Composants du dashboard — portage des KpiCard / SliderRow / NumRow / FormatCard
 // du web (zesit-kpi/apps/web/src/pages/DashboardPage.tsx).
+// Chaque composant est un « expect » : la variante desktop vit dans desktopMain
+// (un fichier par composant) ; l'agencement commun de référence est Default*.
 
 enum class KpiTone { NEUTRAL, GOOD, BAD }
 
-/** Carte d'indicateur (web : composant KpiCard). */
+/** Carte d'indicateur (web : composant KpiCard) — agencement commun : [DefaultKpiCard]. */
 @Composable
-fun KpiCard(
+expect fun KpiCard(
+    label: String,
+    value: String,
+    sub: String?,
+    tone: KpiTone,
+    modifier: Modifier = Modifier,
+)
+
+@Composable
+internal fun DefaultKpiCard(
     label: String,
     value: String,
     sub: String?,
@@ -77,9 +88,20 @@ fun KpiCard(
     }
 }
 
-/** Slider avec libellé + valeur formatée (web : composant SliderRow). */
+/** Slider avec libellé + valeur formatée (web : composant SliderRow) — commun : [DefaultSliderRow]. */
 @Composable
-fun SliderRow(
+expect fun SliderRow(
+    label: String,
+    value: Double,
+    min: Double,
+    max: Double,
+    step: Double,
+    display: String,
+    onValueChange: (Double) -> Unit,
+)
+
+@Composable
+internal fun DefaultSliderRow(
     label: String,
     value: Double,
     min: Double,
@@ -103,9 +125,16 @@ fun SliderRow(
     }
 }
 
-/** Champ numérique borné (web : composant NumRow). */
+/** Champ numérique borné (web : composant NumRow) — commun : [DefaultNumRow]. */
 @Composable
-fun NumRow(
+expect fun NumRow(
+    label: String,
+    value: Double,
+    onValueChange: (Double) -> Unit,
+)
+
+@Composable
+internal fun DefaultNumRow(
     label: String,
     value: Double,
     onValueChange: (Double) -> Unit,
@@ -129,9 +158,16 @@ fun NumRow(
 
 private fun fmtEditable(v: Double): String = v.toString()
 
-/** Carte d'édition d'un format (web : composant FormatCard). */
+/** Carte d'édition d'un format (web : composant FormatCard) — commun : [DefaultFormatCardEditor]. */
 @Composable
-internal fun FormatCardEditor(
+internal expect fun FormatCardEditor(
+    input: KpiFmt,
+    computed: KpiFormatComputed?,
+    onSet: (KpiFormatKey, Double) -> Unit,
+)
+
+@Composable
+internal fun DefaultFormatCardEditor(
     input: KpiFmt,
     computed: KpiFormatComputed?,
     onSet: (KpiFormatKey, Double) -> Unit,
@@ -195,9 +231,17 @@ internal fun FormatCardEditor(
     }
 }
 
-/** Panneau des hypothèses globales (web : « Hypothèses globales »). */
+/** Panneau des hypothèses globales (web : « Hypothèses globales ») — commun : [DefaultHypothesesPanel]. */
 @Composable
-internal fun HypothesesPanel(
+internal expect fun HypothesesPanel(
+    inputs: fr.zesit.admin.kpi.KpiInputs,
+    model: fr.zesit.admin.kpi.KpiResponse?,
+    onSet: (KpiInputKey, Double) -> Unit,
+    modifier: Modifier = Modifier,
+)
+
+@Composable
+internal fun DefaultHypothesesPanel(
     inputs: fr.zesit.admin.kpi.KpiInputs,
     model: fr.zesit.admin.kpi.KpiResponse?,
     onSet: (KpiInputKey, Double) -> Unit,

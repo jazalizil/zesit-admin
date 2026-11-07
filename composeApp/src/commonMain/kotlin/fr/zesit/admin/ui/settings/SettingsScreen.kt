@@ -26,8 +26,20 @@ import androidx.compose.ui.unit.dp
 import fr.zesit.admin.data.AppSettings
 import fr.zesit.admin.viewmodel.NotificationsViewModel
 
+/**
+ * Section Réglages — « expect » : l'agencement par plateforme vit dans
+ * l'`actual` (desktop : desktopMain) ; l'agencement commun de référence est
+ * [DefaultSettingsScreen].
+ */
 @Composable
-fun SettingsScreen(
+expect fun SettingsScreen(
+    viewModel: NotificationsViewModel,
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
+)
+
+@Composable
+internal fun DefaultSettingsScreen(
     viewModel: NotificationsViewModel,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
@@ -48,7 +60,7 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(16.dp, 16.dp, 150.dp),
     ) {
         Text("Serveur ntfy", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
@@ -80,33 +92,6 @@ fun SettingsScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
         )
-
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = {
-                viewModel.saveSettings(AppSettings(baseUrl, topic, token.ifBlank { null }, kpiBaseUrl, kpiUser, kpiPassword))
-                onBack()
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Enregistrer")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = {
-                testResult = "Test en cours…"
-                viewModel.testConnection(AppSettings(baseUrl, topic, token.ifBlank { null })) { ok, err ->
-                    testResult = if (ok) "✓ Connexion OK (auth acceptée)" else "✗ ${err ?: "échec"}"
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Tester la connexion ntfy")
-        }
-        testResult?.let {
-            Spacer(Modifier.height(8.dp))
-            Text(it, style = MaterialTheme.typography.bodySmall)
-        }
 
         Spacer(Modifier.height(32.dp))
         Text("Serveur KPI (dashboard prévisionnel)", style = MaterialTheme.typography.titleMedium)
@@ -160,5 +145,32 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
         }
+        Spacer(Modifier.height(16.dp))
+        Button(
+            onClick = {
+                viewModel.saveSettings(AppSettings(baseUrl, topic, token.ifBlank { null }, kpiBaseUrl, kpiUser, kpiPassword))
+                onBack()
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Enregistrer")
+        }
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = {
+                testResult = "Test en cours…"
+                viewModel.testConnection(AppSettings(baseUrl, topic, token.ifBlank { null })) { ok, err ->
+                    testResult = if (ok) "✓ Connexion OK (auth acceptée)" else "✗ ${err ?: "échec"}"
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Tester la connexion ntfy")
+        }
+        testResult?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall)
+        }
+
     }
 }

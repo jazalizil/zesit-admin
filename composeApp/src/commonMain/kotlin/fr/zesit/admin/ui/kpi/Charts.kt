@@ -57,9 +57,12 @@ internal data class SeriesSpec(
     val area: Boolean = false,
 )
 
-/** Légende commune : pastilles colorées + libellés (miroir de <Legend /> de recharts). */
+/** Légende commune : pastilles colorées + libellés (miroir de <Legend /> de recharts) — commun : [DefaultChartLegend]. */
 @Composable
-internal fun ChartLegend(items: List<Pair<String, Color>>, modifier: Modifier = Modifier) {
+internal expect fun ChartLegend(items: List<Pair<String, Color>>, modifier: Modifier = Modifier)
+
+@Composable
+internal fun DefaultChartLegend(items: List<Pair<String, Color>>, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -79,10 +82,25 @@ internal fun ChartLegend(items: List<Pair<String, Color>>, modifier: Modifier = 
  * Graphique Canvas générique : 1–2 séries de barres (côte à côte si deux) et/ou
  * 1–2 lignes, axes Y gradués (nice steps), labels X, ligne zéro, référence
  * verticale optionnelle. Toutes les séries sont alignées sur [xLabels].
+ *
+ * « expect » : le rendu par plateforme vit dans l'`actual` (desktop :
+ * desktopMain) ; l'implémentation commune de référence est [DefaultChart].
  */
+@Composable
+internal expect fun Chart(
+    xLabels: List<String>,
+    bars: List<SeriesSpec>,
+    lines: List<SeriesSpec>,
+    modifier: Modifier = Modifier,
+    height: Dp = 320.dp,
+    refIndex: Int? = null,
+    refLabel: String? = null,
+    zeroColor: Color = ChartZeroSlate,
+)
+
 @OptIn(ExperimentalTextApi::class)
 @Composable
-internal fun Chart(
+internal fun DefaultChart(
     xLabels: List<String>,
     bars: List<SeriesSpec>,
     lines: List<SeriesSpec>,
@@ -237,9 +255,17 @@ internal fun Chart(
     }
 }
 
-/** Titre + légende + graphique dans une carte (structure des cards du web). */
+/** Titre + légende + graphique dans une carte (structure des cards du web) — commun : [DefaultChartCard]. */
 @Composable
-internal fun ChartCard(
+internal expect fun ChartCard(
+    title: String,
+    legend: List<Pair<String, Color>>,
+    modifier: Modifier = Modifier,
+    chart: @Composable () -> Unit,
+)
+
+@Composable
+internal fun DefaultChartCard(
     title: String,
     legend: List<Pair<String, Color>>,
     modifier: Modifier = Modifier,

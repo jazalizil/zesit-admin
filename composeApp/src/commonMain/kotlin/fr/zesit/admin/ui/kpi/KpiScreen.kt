@@ -51,9 +51,20 @@ private val TABS = listOf("📊 Année 1", "🌡️ Sensibilité", "🧾 Détail
  * Section KPI du dashboard — portage Compose de la page DashboardPage.tsx
  * (zesit-kpi/apps/web) : KPI cards, formats, hypothèses, graphiques, tableau
  * mensuel et modèles enregistrés.
+ *
+ * Composant « expect » : l'agencement par plateforme vit dans l'`actual`
+ * (desktop : desktopMain, fichier par composant) ; l'agencement commun de
+ * référence est [DefaultKpiScreen].
  */
 @Composable
-fun KpiScreen(
+expect fun KpiScreen(
+    viewModel: KpiViewModel,
+    modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
+)
+
+@Composable
+internal fun DefaultKpiScreen(
     viewModel: KpiViewModel,
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},

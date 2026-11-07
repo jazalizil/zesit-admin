@@ -31,9 +31,22 @@ import fr.zesit.admin.viewmodel.KpiUiState
 /**
  * Barre de gestion des modèles enregistrés (web : composant ModelsBar) :
  * sélecteur, Charger, Enregistrer/Réenregistrer, Supprimer.
+ *
+ * Composant « expect » : l'agencement par plateforme vit dans l'`actual`
+ * (desktop : desktopMain) ; le commun de référence est [DefaultModelsBar].
  */
 @Composable
-fun ModelsBar(
+expect fun ModelsBar(
+    state: KpiUiState,
+    onSelect: (String?) -> Unit,
+    onLoad: () -> Unit,
+    onSave: (name: String, description: String) -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+)
+
+@Composable
+internal fun DefaultModelsBar(
     state: KpiUiState,
     onSelect: (String?) -> Unit,
     onLoad: () -> Unit,

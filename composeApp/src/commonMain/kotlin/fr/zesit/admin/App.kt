@@ -39,9 +39,18 @@ import fr.zesit.admin.viewmodel.KpiViewModel
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import fr.zesit.admin.viewmodel.NotificationsViewModel
 
+/**
+ * Racine de l'app (thème + ViewModels + navigation + sections du dashboard).
+ * Déclarée « expect » : chaque plateforme fournit un `actual` dans son source
+ * set (desktop : desktopMain — un fichier par composant), libre d'y définir
+ * son propre agencement ; l'implémentation commune de référence est [DefaultApp].
+ */
+@Composable
+expect fun App(container: AppContainer)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(container: AppContainer = remember { AppContainer() }) {
+internal fun DefaultApp(container: AppContainer) {
     ZesitAdminTheme {
         val viewModel: NotificationsViewModel = viewModel { NotificationsViewModel(container) }
         val kpiViewModel: KpiViewModel = viewModel { KpiViewModel(container) }

@@ -17,9 +17,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import fr.zesit.admin.kpi.KpiResponse
 
-/** Compte de résultat mensuel (web : onglet « Détail mensuel », table 11 colonnes). */
+/**
+ * Compte de résultat mensuel (web : onglet « Détail mensuel », table 11 colonnes).
+ * Composant « expect » : l'agencement par plateforme vit dans l'`actual`
+ * (desktop : desktopMain) ; le commun de référence est [DefaultMonthlyTable].
+ */
 @Composable
-fun MonthlyTable(model: KpiResponse, modifier: Modifier = Modifier) {
+expect fun MonthlyTable(model: KpiResponse, modifier: Modifier = Modifier)
+
+@Composable
+internal fun DefaultMonthlyTable(model: KpiResponse, modifier: Modifier = Modifier) {
     Card(modifier) {
         Column(
             Modifier

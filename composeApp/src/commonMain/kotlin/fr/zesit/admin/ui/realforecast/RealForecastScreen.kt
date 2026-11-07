@@ -65,9 +65,20 @@ import kotlin.math.abs
  * Section « Réel / Prévisionnel » — portage Compose de RealVsForecast.tsx
  * (zesit-kpi/apps/web) : ventes Medusa synchronisées (1×/jour côté serveur)
  * comparées au prévisionnel du modèle chargé dans la section KPI.
+ *
+ * Composant « expect » : l'agencement par plateforme vit dans l'`actual`
+ * (desktop : desktopMain) ; l'agencement commun de référence est
+ * [DefaultRealForecastScreen].
  */
 @Composable
-fun RealForecastScreen(
+expect fun RealForecastScreen(
+    viewModel: MedusaViewModel,
+    modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
+)
+
+@Composable
+internal fun DefaultRealForecastScreen(
     viewModel: MedusaViewModel,
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},

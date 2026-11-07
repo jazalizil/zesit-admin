@@ -33,8 +33,19 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+/**
+ * Section Notifications — « expect » : l'agencement par plateforme vit dans
+ * l'`actual` (desktop : desktopMain) ; l'agencement commun de référence est
+ * [DefaultNotificationsScreen].
+ */
 @Composable
-fun NotificationsScreen(
+expect fun NotificationsScreen(
+    viewModel: NotificationsViewModel,
+    modifier: Modifier = Modifier,
+)
+
+@Composable
+internal fun DefaultNotificationsScreen(
     viewModel: NotificationsViewModel,
     modifier: Modifier = Modifier,
 ) {

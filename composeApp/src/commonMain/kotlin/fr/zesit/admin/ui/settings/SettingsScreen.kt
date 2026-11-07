@@ -1,11 +1,13 @@
 package fr.zesit.admin.ui.settings
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -56,12 +59,18 @@ internal fun DefaultSettingsScreen(
     var kpiUser by remember(saved) { mutableStateOf(saved.kpiUser) }
     var kpiPassword by remember(saved) { mutableStateOf(saved.kpiPassword) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp, 16.dp, 150.dp),
-    ) {
+    // Colonne de formulaire à largeur bornée et centrée (même pattern que
+    // KpiScreen/RealForecastScreen) : les inputs restent lisibles sur grand
+    // écran desktop sans padding droit fixe.
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(Modifier.widthIn(max = 480.dp)) {
         Text("Serveur ntfy", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -171,6 +180,7 @@ internal fun DefaultSettingsScreen(
             Spacer(Modifier.height(8.dp))
             Text(it, style = MaterialTheme.typography.bodySmall)
         }
-
+            }
+        }
     }
 }

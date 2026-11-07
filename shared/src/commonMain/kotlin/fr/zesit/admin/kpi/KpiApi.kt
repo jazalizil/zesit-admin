@@ -51,6 +51,34 @@ interface KpiApi {
 
     /** Ferme la session serveur (supprime le cookie) — best effort. */
     suspend fun logout(baseUrl: String, token: String)
+
+    // --- Réel vs prévisionnel (ventes Medusa synchronisées côté serveur) ---
+
+    /** Statut des dernières synchros + totaux en base. */
+    suspend fun medusaStatus(baseUrl: String, token: String): MedusaStatus
+
+    /** Synchro manuelle des `days` derniers jours écoulés (1 = la veille). */
+    suspend fun medusaSyncDays(baseUrl: String, token: String, days: Int): MedusaSyncResult
+
+    /** Catalogue variantes + sales channels (mapping format_cl éditable). */
+    suspend fun medusaMapping(baseUrl: String, token: String): MedusaMapping
+
+    /** Mappe une variante à un format (25 / 33 / 50 cl), ou null pour démapper. */
+    suspend fun setMedusaVariantFormat(
+        baseUrl: String,
+        token: String,
+        variantId: String,
+        formatCl: Int?,
+    ): MedusaVariant
+
+    /** Réel vs prévisionnel sur la période [from, to] (ISO YYYY-MM-DD), selon `inputs`. */
+    suspend fun medusaComparison(
+        baseUrl: String,
+        token: String,
+        from: String,
+        to: String,
+        inputs: KpiInputs,
+    ): MedusaComparison
 }
 
 class KpiAuthException(message: String = "Session KPI invalide ou expirée (401).") : Exception(message)

@@ -10,6 +10,9 @@ import fr.zesit.admin.kpi.KpiSessionStore
 import fr.zesit.admin.kpi.createKpiApi
 import fr.zesit.admin.ntfy.NtfyApi
 import fr.zesit.admin.ntfy.createNtfyApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Conteneur d'injection minimal (pas de Koin/Hilt pour rester léger) :
@@ -27,6 +30,10 @@ class AppContainer {
     val kpiApi: KpiApi = createKpiApi()
     val kpiSessionStore = KpiSessionStore(settings)
     val kpiHypothesesStore = KpiHypothesesStore(settings)
+
+    // Session KPI partagée (KPI + Réel/Prévisionnel) — scope applicatif
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    internal val kpiSession = KpiSession(kpiApi, kpiSessionStore, appScope, settingsRepository.appSettings)
 
     // Référence explicite : rend ApnsBridge atteignable depuis l'API publique non-Compose,
     // donc exporté dans le header ObjC de ComposeApp.framework (appelé depuis Swift).

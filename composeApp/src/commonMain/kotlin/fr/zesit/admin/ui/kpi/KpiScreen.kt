@@ -340,8 +340,8 @@ private fun Annee1Charts(model: KpiResponse) {
         ) {
             Chart(
                 xLabels = months.map { it.mois },
-                barValues = months.map { it.resultat },
-                lineValues = months.map { it.cumul },
+                bars = listOf(SeriesSpec(months.map { it.resultat }, ChartBarPositive, signColored = true)),
+                lines = listOf(SeriesSpec(months.map { it.cumul }, ChartLineTeal)),
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
         }
@@ -351,7 +351,8 @@ private fun Annee1Charts(model: KpiResponse) {
         ) {
             Chart(
                 xLabels = months.map { it.mois },
-                areaValues = months.map { it.treso },
+                bars = emptyList(),
+                lines = listOf(SeriesSpec(months.map { it.treso }, ChartAreaAmber, area = true)),
                 zeroColor = ChartZeroRed,
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
@@ -372,8 +373,8 @@ private fun SensibiliteCharts(model: KpiResponse, inputs: KpiInputs) {
         ) {
             Chart(
                 xLabels = sensPate.map { fmtPate(it.pate) },
-                lineValues = sensPate.map { it.resultat },
-                lineColor = ChartLineSky,
+                bars = emptyList(),
+                lines = listOf(SeriesSpec(sensPate.map { it.resultat }, ChartLineSky)),
                 refIndex = refIndex,
                 refLabel = "Hypothèse actuelle",
                 zeroColor = ChartZeroRed,
@@ -386,7 +387,8 @@ private fun SensibiliteCharts(model: KpiResponse, inputs: KpiInputs) {
         ) {
             Chart(
                 xLabels = sensMix.map { fmtMix(it.mix) },
-                barValues = sensMix.map { it.resultat },
+                bars = listOf(SeriesSpec(sensMix.map { it.resultat }, ChartBarPositive, signColored = true)),
+                lines = emptyList(),
                 modifier = Modifier.padding(horizontal = 12.dp),
             )
         }

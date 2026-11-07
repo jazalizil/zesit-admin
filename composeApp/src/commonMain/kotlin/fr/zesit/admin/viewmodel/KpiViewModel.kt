@@ -3,13 +3,14 @@ package fr.zesit.admin.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.zesit.admin.di.AppContainer
+import fr.zesit.admin.di.KpiSession
+import fr.zesit.admin.di.KpiSessionState
 import fr.zesit.admin.kpi.KpiFmt
 import fr.zesit.admin.kpi.KpiInputs
 import fr.zesit.admin.kpi.KpiModelSummary
 import fr.zesit.admin.kpi.KpiResponse
 import fr.zesit.admin.kpi.KpiAuthException
 import fr.zesit.admin.kpi.KpiApiException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,13 +72,13 @@ data class KpiUiState(
 /**
  * Portage du store Zustand du dashboard web (zesit-kpi/apps/web/src/store/model.ts) :
  * hydratation (hypothèses locales sinon `/api/defaults`), recalcul débouncé à chaque
- * changement d'hypothèse, re-login automatique sur 401, CRUD des modèles enregistrés.
+ * changement d'hypothèse, CRUD des modèles enregistrés. Auth déléguée à [KpiSession].
  */
 class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     private val api get() = container.kpiApi
-    private val sessionStore = container.kpiSessionStore
     private val hypothesesStore = container.kpiHypothesesStore
+    private val session: KpiSession = container.kpiSession
 
     private val _uiState = MutableStateFlow(KpiUiState())
     val uiState: StateFlow<KpiUiState> = _uiState.asStateFlow()
@@ -85,26 +86,14 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
     /** Pipeline de recalcul : chaque publication déclenche un refresh débouncé. */
     private val inputsFlow = MutableStateFlow<KpiInputs?>(null)
 
-    /** (baseUrl, user, password) — une nouvelle valeur (≠) relance la connexion. */
-    private var config: Triple<String, String, String>? = null
-    private var token: String? = null
+    /** Hypothèses courantes du modèle chargé (consommé par la section Réel/Prévisionnel). */
+    internal val currentInputs: StateFlow<KpiInputs?> = inputsFlow.asStateFlow()
+
     private var lastComputed: KpiInputs? = null
-    private var sessionClosed = false
 
     init {
         viewModelScope.launch {
-            container.settingsRepository.appSettings.collectLatest { settings ->
-                val newConfig = Triple(
-                    settings.normalizedKpiBaseUrl,
-                    settings.kpiUser.trim(),
-                    settings.kpiPassword,
-                )
-                if (newConfig != config) {
-                    config = newConfig
-                    sessionClosed = false
-                    boot()
-                }
-            }
+            session.state.collectLatest { st -> onSessionState(st) }
         }
         viewModelScope.launch {
             inputsFlow.collectLatest { inputs ->
@@ -116,6 +105,38 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    private fun onSessionState(st: KpiSessionState) {
+        val previousConnected = _uiState.value.connected
+        _uiState.value = _uiState.value.copy(
+            configured = st.configured,
+            connected = st.connected,
+            userName = st.userName,
+            error = when {
+                !st.connected -> st.error
+                else -> null
+            },
+        )
+        // (Re)connexion : hydrate les hypothèses puis charge la liste des modèles.
+        if (st.connected && !previousConnected) {
+            viewModelScope.launch { hydrate() }
+        }
+    }
+
+    /** Session valide → hypothèses locales sinon défaut serveur, puis recalcul + modèles. */
+    private suspend fun hydrate() {
+        try {
+            val inputs = _uiState.value.inputs ?: (hypothesesStore.load() ?: defaultsFromServer())
+            lastComputed = null // force le recalcul réseau du modèle
+            applyInputs(inputs) // publie dans inputsFlow -> refresh débouncé
+            reloadModels()
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(error = friendly(e))
+        }
+    }
+
+    private suspend fun defaultsFromServer(): KpiInputs =
+        session.authed { base, token -> api.defaults(base, token) }
+
     // --- Edition des hypothèses (optimiste, comme le web) ---
 
     internal fun setInput(key: KpiInputKey, value: Double) = updateInputs { key.apply(it, value) }
@@ -124,23 +145,16 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
         inputs.copy(formats = inputs.formats.mapIndexed { i, f -> if (i == index) key.apply(f, value) else f })
     }
 
-    /** Applique un « update » optimiste aux hypothèses + persiste + déclenche le recalcul. */
-    private fun updateInputs(transform: (KpiInputs) -> KpiInputs) {
-        val current = _uiState.value.inputs ?: return
-        val next = transform(current)
-        if (next == current) return
-        hypothesesStore.save(next)
-        _uiState.value = _uiState.value.copy(inputs = next, dirty = true)
-        inputsFlow.value = next
-    }
-
     /** Réinitialise aux hypothèses par défaut du serveur (source de vérité). */
     fun reset() {
-        val base = baseUrl() ?: return
-        launchAuth {
-            val dflt = authed { api.defaults(base, it) }
-            applyInputs(dflt)
-            notice(true, "Hypothèses réinitialisées aux valeurs par défaut.")
+        viewModelScope.launch {
+            try {
+                val dflt = defaultsFromServer()
+                applyInputs(dflt)
+                notice(true, "Hypothèses réinitialisées aux valeurs par défaut.")
+            } catch (e: Exception) {
+                notice(false, friendly(e))
+            }
         }
     }
 
@@ -152,21 +166,18 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     /** Charge le modèle sélectionné : hypothèses + résultats stockés par l'API. */
     fun loadSelectedModel() {
-        val base = baseUrl() ?: return
         val id = _uiState.value.selectedModelId ?: return
-        launchAuth {
-            val detail = authed { api.modelDetail(base, it, id) }
+        launchBusy {
+            val detail = session.authed { base, token -> api.modelDetail(base, token, id) }
             lastComputed = detail.inputs
             hypothesesStore.save(detail.inputs)
+            inputsFlow.value = detail.inputs
             _uiState.value = _uiState.value.copy(
                 inputs = detail.inputs,
                 model = detail.resultats,
                 dirty = false,
-                modelBusy = false,
-                error = null,
                 notice = KpiNotice(true, "Hypothèses du modèle « ${detail.name} » chargées."),
             )
-            inputsFlow.value = detail.inputs // == lastComputed → pas de recalcul réseau
         }
     }
 
@@ -175,11 +186,10 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
      * création sinon (l'API recalcule et stocke les résultats).
      */
     fun saveCurrentModel(name: String, description: String) {
-        val base = baseUrl() ?: return
         val inputs = _uiState.value.inputs ?: return
         val id = _uiState.value.selectedModelId
-        launchAuth {
-            val saved = authed { token ->
+        launchBusy {
+            val saved = session.authed { base, token ->
                 if (id == null) {
                     api.createModel(base, token, name, description, inputs)
                 } else {
@@ -188,12 +198,12 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
             }
             lastComputed = saved.inputs
             hypothesesStore.save(saved.inputs)
+            inputsFlow.value = saved.inputs
             _uiState.value = _uiState.value.copy(
                 inputs = saved.inputs,
                 model = saved.resultats,
                 dirty = false,
                 selectedModelId = saved.id,
-                modelBusy = false,
                 notice = KpiNotice(true, "Modèle « ${saved.name} » enregistré."),
             )
             reloadModels() // rafraîchit la liste (KPIs/dates côté serveur)
@@ -201,11 +211,10 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun deleteSelectedModel() {
-        val base = baseUrl() ?: return
         val id = _uiState.value.selectedModelId ?: return
-        launchAuth {
-            authed { api.deleteModel(base, it, id) }
-            _uiState.value = _uiState.value.copy(selectedModelId = null, modelBusy = false)
+        launchBusy {
+            session.authed { base, token -> api.deleteModel(base, token, id) }
+            _uiState.value = _uiState.value.copy(selectedModelId = null)
             reloadModels()
             notice(true, "Modèle supprimé.")
         }
@@ -213,28 +222,10 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     // --- Session ---
 
-    fun logout() {
-        viewModelScope.launch {
-            val base = config?.first ?: return@launch
-            token?.let { t -> runCatching { api.logout(base, t) } }
-            token = null
-            sessionStore.set(null)
-            sessionClosed = true
-            _uiState.value = _uiState.value.copy(
-                connected = false,
-                userName = null,
-                error = "Session KPI fermée — reconnectez-vous.",
-            )
-        }
-    }
+    fun logout() = session.logout()
 
     /** Reconnexion explicite (après logout ou erreur d'identifiants). */
-    fun reconnect() {
-        viewModelScope.launch {
-            sessionClosed = false
-            boot()
-        }
-    }
+    fun reconnect() = session.reconnect()
 
     fun clearNotice() {
         _uiState.value = _uiState.value.copy(notice = null)
@@ -242,72 +233,15 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     // --- Internes ---
 
-    /** Connexion/refresh initial : session, hypothèses, modèles. */
-    private suspend fun boot() {
-        val (base, user, _) = config ?: return
-        if (base.isBlank() || user.isBlank()) {
-            token = null
-            sessionStore.set(null)
-            _uiState.value = KpiUiState(configured = false)
-            return
-        }
-        _uiState.value = _uiState.value.copy(configured = true, connected = false, error = null)
-        try {
-            val name = authed { api.me(base, it) }
-            _uiState.value = _uiState.value.copy(connected = true, userName = name)
-            val inputs = hypothesesStore.load() ?: authed { api.defaults(base, it) }
-            lastComputed = null // force le recalcul réseau du modèle
-            applyInputs(inputs)
-            refresh() // modèle initial
-            reloadModels()
-        } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
-                connected = false,
-                error = friendly(e),
-            )
-        }
-    }
-
-    /**
-     * Exécute `block` avec un token valide : re-login automatique sur 401
-     * (une seule tentative, sinon l'erreur remonte à l'UI).
-     */
-    private suspend fun <T> authed(block: suspend (String) -> T): T {
-        val (base, user, pass) = config ?: throw KpiApiException("Serveur KPI non configuré.")
-        if (sessionClosed) throw KpiAuthException("Session KPI fermée — reconnectez-vous.")
-        var current = token ?: sessionStore.get()
-        if (current == null) {
-            current = api.login(base, user, pass).also { sessionStore.set(it); token = it }
-        }
-        return try {
-            block(current)
-        } catch (_: KpiAuthException) {
-            val fresh = api.login(base, user, pass).also { sessionStore.set(it); token = it }
-            try { block(fresh) } catch (_: KpiAuthException) { throw KpiAuthException("Identifiants KPI invalides.") }
-        }
-    }
-
-    /** lance une action authentifiée avec gestion du busy + erreur/notice. */
-    private fun launchAuth(action: suspend () -> Unit) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(modelBusy = true)
-            try {
-                action()
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(modelBusy = false, notice = KpiNotice(false, friendly(e)))
-            }
-        }
-    }
-
     private suspend fun refresh() {
-        val base = baseUrl() ?: return
+        val base = session.baseUrl() ?: return
         val inputs = _uiState.value.inputs ?: return
         // Optimistic : si un modèle chargé/enregistré correspond exactement aux inputs,
         // inutile de recalculer (l'API vient de nous les renvoyer).
         if (inputs == lastComputed && _uiState.value.model != null) return
         _uiState.value = _uiState.value.copy(loading = true)
         try {
-            val response = authed { api.model(base, it, inputs) }
+            val response = session.authed { base, token -> api.model(base, token, inputs) }
             if (_uiState.value.inputs == inputs) {
                 lastComputed = inputs
                 _uiState.value = _uiState.value.copy(model = response, loading = false, dirty = false, error = null)
@@ -323,10 +257,10 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     /** Recharge la liste des modèles (best effort, sans erreur bloquante). */
     private suspend fun reloadModels() {
-        val base = baseUrl() ?: return
+        val base = session.baseUrl() ?: return
         _uiState.value = _uiState.value.copy(modelsLoading = true)
         try {
-            val list = authed { api.models(base, it) }
+            val list = session.authed { base, token -> api.models(base, token) }
             _uiState.value = _uiState.value.copy(
                 models = list,
                 modelsLoading = false,
@@ -343,13 +277,31 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
         inputsFlow.value = inputs
     }
 
-    private fun baseUrl(): String? {
-        val current = config ?: return null
-        return current.first.takeIf { it.isNotBlank() && current.second.isNotBlank() }
+    /** Applique un « update » optimiste aux hypothèses + persiste + déclenche le recalcul. */
+    private fun updateInputs(transform: (KpiInputs) -> KpiInputs) {
+        val current = _uiState.value.inputs ?: return
+        val next = transform(current)
+        if (next == current) return
+        hypothesesStore.save(next)
+        _uiState.value = _uiState.value.copy(inputs = next, dirty = true)
+        inputsFlow.value = next
+    }
+
+    /** lance une action serveur avec gestion du busy + erreur/notice. */
+    private fun launchBusy(action: suspend () -> Unit) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(modelBusy = true)
+            try {
+                action()
+                _uiState.value = _uiState.value.copy(modelBusy = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(modelBusy = false, notice = KpiNotice(false, friendly(e)))
+            }
+        }
     }
 
     private fun notice(ok: Boolean, text: String) {
-        _uiState.value = _uiState.value.copy(modelBusy = false, notice = KpiNotice(ok, text))
+        _uiState.value = _uiState.value.copy(notice = KpiNotice(ok, text))
     }
 
     private fun friendly(e: Exception): String = when (e) {

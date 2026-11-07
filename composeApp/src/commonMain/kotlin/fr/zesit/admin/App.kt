@@ -36,6 +36,7 @@ import fr.zesit.admin.ui.realforecast.RealForecastScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
 import fr.zesit.admin.ui.theme.ZesitAdminTheme
 import fr.zesit.admin.viewmodel.KpiViewModel
+import fr.zesit.admin.viewmodel.MedusaViewModel
 import fr.zesit.admin.viewmodel.NotificationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +45,8 @@ fun App(container: AppContainer = remember { AppContainer() }) {
     ZesitAdminTheme {
         val viewModel: NotificationsViewModel = viewModel { NotificationsViewModel(container) }
         val kpiViewModel: KpiViewModel = viewModel { KpiViewModel(container) }
+        val medusaViewModel: MedusaViewModel =
+            viewModel { MedusaViewModel(container, kpiViewModel.currentInputs) }
 
         // Branche le pont APNs : l'AppDelegate Swift pousse le device token ici (iOS uniquement)
         DisposableEffect(Unit) {
@@ -130,7 +133,11 @@ fun App(container: AppContainer = remember { AppContainer() }) {
                             modifier = Modifier.weight(1f),
                             onOpenSettings = { showSettings = true },
                         )
-                        section == DashboardSection.RealForecast -> RealForecastScreen(Modifier.weight(1f))
+                        section == DashboardSection.RealForecast -> RealForecastScreen(
+                            viewModel = medusaViewModel,
+                            modifier = Modifier.weight(1f),
+                            onOpenSettings = { showSettings = true },
+                        )
                         section == DashboardSection.Notifications -> NotificationsScreen(
                             viewModel = viewModel,
                             modifier = Modifier.weight(1f),

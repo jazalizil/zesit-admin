@@ -47,6 +47,15 @@ private data class UpdateModelRequest(
 @Serializable
 private data class ApiError(val error: String? = null)
 
+@Serializable
+private data class SyncDaysRequest(val days: Int)
+
+@Serializable
+private data class VariantFormatRequest(val format_cl: Int?)
+
+@Serializable
+private data class ComparisonRequest(val from: String, val to: String, val inputs: KpiInputs)
+
 internal class KtorKpiApi(private val client: HttpClient) : KpiApi {
 
     override suspend fun login(baseUrl: String, username: String, password: String): String {
@@ -125,6 +134,63 @@ internal class KtorKpiApi(private val client: HttpClient) : KpiApi {
         // Best effort : le serveur retire le cookie ; le token local est ensuite purgé.
         runCatching { client.post(baseUrl.api("/logout")) { auth(token) } }
     }
+
+    // --- Réel vs prévisionnel (Medusa) ---
+
+    override suspend fun medusaStatus(baseUrl: String, token: String): MedusaStatus =
+        decode(client.get(baseUrl.api("/medusa/status")) { auth(token) }, MedusaStatus.serializer())
+
+    override suspend fun medusaSyncDays(baseUrl: String, token: String, days: Int): MedusaSyncResult {
+        val response = client.post(baseUrl.api("/medusa/sync")) {
+            auth(token)
+            contentType(ContentType.Application.Json)
+            setBody(SyncDaysRequest(days))
+        }
+        if (response.status == HttpStatusCode.Unauthorized) throw KpiAuthException()
+        if (!response.status.isSuccess()) {
+            // 502 = toutes les synchros ont échoué : le corps reste {results, errors}
+            val result = runCatching {
+                json.decodeFromString(MedusaSyncResult.serializer(), response.bodyAsText())
+            }.getOrNull()
+            val detail = result?.takeIf { it.errors.isNotEmpty() }?.let { r ->
+                "Synchro en échec : " + r.errors.joinToString(" ; ") { it.error }
+            }
+            throw KpiApiException(detail ?: "Synchro Medusa impossible (HTTP ${response.status.value}).")
+        }
+        return json.decodeFromString(MedusaSyncResult.serializer(), response.bodyAsText())
+    }
+
+    override suspend fun medusaMapping(baseUrl: String, token: String): MedusaMapping =
+        decode(client.get(baseUrl.api("/medusa/mapping")) { auth(token) }, MedusaMapping.serializer())
+
+    override suspend fun setMedusaVariantFormat(
+        baseUrl: String,
+        token: String,
+        variantId: String,
+        formatCl: Int?,
+    ): MedusaVariant = decode(
+        client.put(baseUrl.api("/medusa/variants/$variantId")) {
+            auth(token)
+            contentType(ContentType.Application.Json)
+            setBody(VariantFormatRequest(formatCl))
+        },
+        MedusaVariant.serializer(),
+    )
+
+    override suspend fun medusaComparison(
+        baseUrl: String,
+        token: String,
+        from: String,
+        to: String,
+        inputs: KpiInputs,
+    ): MedusaComparison = decode(
+        client.post(baseUrl.api("/medusa/comparison")) {
+            auth(token)
+            contentType(ContentType.Application.Json)
+            setBody(ComparisonRequest(from, to, inputs))
+        },
+        MedusaComparison.serializer(),
+    )
 
     // --- Helpers ---
 

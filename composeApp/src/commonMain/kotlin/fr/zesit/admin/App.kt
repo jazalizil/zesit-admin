@@ -17,7 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import fr.zesit.admin.apns.ApnsBridge
+import fr.zesit.admin.bridge.ApnsBridge
+import fr.zesit.admin.bridge.ApnsTokenHandler
 import fr.zesit.admin.di.AppContainer
 import fr.zesit.admin.ui.notifications.NotificationsScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
@@ -32,8 +33,8 @@ fun App(container: AppContainer = remember { AppContainer() }) {
 
         // Branche le pont APNs : l'AppDelegate Swift pousse le device token ici (iOS uniquement)
         DisposableEffect(Unit) {
-            ApnsBridge.handler = { tokenHex -> viewModel.onApnsDeviceToken(tokenHex) }
-            onDispose { ApnsBridge.handler = null }
+            ApnsBridge.setTokenHandler(ApnsTokenHandler { tokenHex -> viewModel.onApnsDeviceToken(tokenHex) })
+            onDispose { ApnsBridge.clearTokenHandler() }
         }
 
         var showSettings by remember { mutableStateOf(false) }

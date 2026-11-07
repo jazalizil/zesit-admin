@@ -33,7 +33,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     ) {
         let tokenHex = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("APNs: device token reçu (\(tokenHex.prefix(12))…) → envoi à Zesit Admin (KMP)")
-        ApnsBridge.shared.registerDeviceToken(tokenHex: tokenHex)
+        SharedApnsBridge.shared.registerDeviceToken(tokenHex: tokenHex)
     }
 
     func application(

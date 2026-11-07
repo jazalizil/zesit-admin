@@ -7,7 +7,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 
-actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
+internal actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
     install(ContentNegotiation) { json() }
     install(Logging) { level = LogLevel.INFO }
     engine {

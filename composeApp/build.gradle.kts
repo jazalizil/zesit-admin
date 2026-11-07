@@ -15,13 +15,31 @@ kotlin {
         }
     }
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    // En Kotlin 2.2, les cibles iOS ne produisent plus de framework binaire par
+    // défaut (remplacé par le Swift Export). On le déclare explicitement : le projet
+    // Xcode (iosApp) linke ComposeApp.framework depuis composeApp/build/xcode-frameworks.
+    iosX64 {
+        binaries.framework {
+            baseName = "ComposeApp"
+        }
+    }
+    iosArm64 {
+        binaries.framework {
+            baseName = "ComposeApp"
+        }
+    }
+    iosSimulatorArm64 {
+        binaries.framework {
+            baseName = "ComposeApp"
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":shared"))
+            // api (et pas implementation) : le framework ComposeApp doit exposer
+            // dans son header ObjC les déclarations publiques de shared, notamment
+            // ApnsBridge (appelé depuis l'AppDelegate Swift).
+            api(project(":shared"))
             implementation(libs.ktor.client.core)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)

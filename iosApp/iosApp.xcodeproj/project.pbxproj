@@ -36,7 +36,7 @@
 		C0DE00000000000000000013 /* iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iosApp.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C0DE00000000000000000015 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		C0DE00000000000000000016 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = "composeApp/build/xcode-frameworks/$(PLATFORM_NAME)/$(CONFIGURATION)/ComposeApp.framework"; sourceTree = SOURCE_ROOT; };
+		C0DE00000000000000000016 /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = "../composeApp/build/xcode-frameworks/$(PLATFORM_NAME)/$(CONFIGURATION)/ComposeApp.framework"; sourceTree = SOURCE_ROOT; };
 		C0DE00000000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C0DE00000000000000000018 /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
 		C0DE00000000000000000019 /* Zesit Admin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zesit Admin.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -184,7 +184,7 @@
 			// Xcode lance les Run Script avec un PATH minimal ("java" introuvable)
 			// : on exporte JAVA_HOME (sdkman -> JBR Android Studio -> java_home)
 			// avant ./gradlew, comme dans l'app ToyotaObd
-			shellScript = "if [ \\\"YES\\\" = \\\"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\\\" ]; then\\n  echo \\\"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\\\\\"YES\\\\\\\"\\\"\\n  exit 0\\nfi\\ncd \\\"$SRCROOT/..\\\"\\nif [ -z \\\"$JAVA_HOME\\\" ]; then\\n  if [ -x \\\"$HOME/.sdkman/candidates/java/current/bin/java\\\" ]; then\\n    export JAVA_HOME=\\\"$HOME/.sdkman/candidates/java/current\\\"\\n  elif [ -x \\\"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java\\\" ]; then\\n    export JAVA_HOME=\\\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\\\"\\n  else\\n    export JAVA_HOME=\\\"$(/usr/libexec/java_home)\\\"\\n  fi\\nfi\\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode";
+			shellScript = "\"${SRCROOT}/gradle-build.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

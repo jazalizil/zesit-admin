@@ -44,3 +44,10 @@ interface NtfyApi {
 
     fun close()
 }
+
+/**
+ * Factory publique : construit l'implémentation Ktor sans exposer les types Ktor
+ * dans l'API publique (important pour le Swift Export, qui traduit toute l'API
+ * publique des modules exportés).
+ */
+fun createNtfyApi(): NtfyApi = KtorNtfyApi(createHttpClient())

@@ -37,7 +37,7 @@ fun SettingsScreen(
 
     var baseUrl by remember(saved) { mutableStateOf(saved.baseUrl) }
     var topic by remember(saved) { mutableStateOf(saved.topic) }
-    var token by remember(saved) { mutableStateOf(saved.token) }
+    var token by remember(saved) { mutableStateOf(saved.token.orEmpty()) }
     var testResult by remember { mutableStateOf<String?>(null) }
 
     Column(

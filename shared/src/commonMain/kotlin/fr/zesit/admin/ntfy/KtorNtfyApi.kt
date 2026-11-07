@@ -36,7 +36,7 @@ private data class ApnsDeviceRequest(
     val topics: List<String>,
 )
 
-class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
+internal class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
 
     override fun connect(baseUrl: String, topic: String, token: String?): Flow<NtfyMessage> =
         flow {
@@ -83,7 +83,7 @@ class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
                 ?.let { header(HttpHeaders.Authorization, "Bearer $it") }
         }
         if (response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden) {
-            throw NtfyAuthException(response.status)
+            throw NtfyAuthException(response.status.value)
         }
         if (!response.status.isSuccess()) throw NtfyException("poll HTTP ${response.status.value}")
         return response.bodyAsText()
@@ -108,7 +108,7 @@ class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
             setBody(ApnsDeviceRequest(apnsDeviceToken.lowercase(), environment, topics))
         }
         if (response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden) {
-            throw NtfyAuthException(response.status)
+            throw NtfyAuthException(response.status.value)
         }
         if (!response.status.isSuccess()) {
             throw NtfyException("registerApnsDevice HTTP ${response.status.value} : ${response.bodyAsText()}")
@@ -139,5 +139,5 @@ class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
     }
 }
 
-class NtfyAuthException(val status: HttpStatusCode) : Exception("Auth ntfy refusée (HTTP ${status.value}) — vérifier le token")
+class NtfyAuthException(val status: Int) : Exception("Auth ntfy refusée (HTTP $status) — vérifier le token")
 class NtfyException(message: String) : Exception(message)

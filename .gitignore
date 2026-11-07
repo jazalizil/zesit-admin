@@ -1,0 +1,15 @@
+# Build
+build/
+.gradle/
+.kotlin/
+.idea/
+local.properties
+*.xcuserstate
+xcuserdata/
+project.xcworkspace/
+.DS_Store
+
+# Kotlin/Xcode build outputs
+composeApp/build/
+shared/build/
+iosApp/build/

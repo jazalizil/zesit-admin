@@ -9,10 +9,21 @@ import ComposeApp
 /// au `apns-topic` du serveur.
 class AppDelegate: NSObject, UIApplicationDelegate {
 
+    var window: UIWindow?
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // Fenêtre plein écran, root = vue Compose (MainViewController) :
+        // couvre tout l'écran, y compris sous la status bar et le home indicator.
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        window.rootViewController = MainViewControllerKt.MainViewController()
+        window.makeKeyAndVisible()
+        self.window = window
+
+
+
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if let error = error {

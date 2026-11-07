@@ -66,7 +66,7 @@ fun NotificationsScreen(
                     Text(
                         if (state.connected) "Connecté (temps réel)" else "Hors ligne — poll manuel",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (state.connected) Color(0xFF7DD3A8) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (state.connected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     state.lastError?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)

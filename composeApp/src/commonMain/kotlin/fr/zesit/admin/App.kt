@@ -1,6 +1,8 @@
 package fr.zesit.admin
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +42,10 @@ fun App(container: AppContainer = remember { AppContainer() }) {
         var showSettings by remember { mutableStateOf(false) }
 
         Scaffold(
+            // Plein écran : le fond couvre tout l'écran (status bar / home indicator
+            // inclus) ; le contenu reste paddé par les safe-area insets (défaut).
+            modifier = Modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 TopAppBar(
                     title = { Text(if (showSettings) "Réglages" else "Zesit Admin") },

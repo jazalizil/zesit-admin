@@ -66,6 +66,10 @@ kotlin {
         named("desktopMain") {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                // Fournit Dispatchers.Main sur JVM desktop (Swing) — requis par viewModelScope
+                implementation(libs.kotlinx.coroutines.swing)
+                // Provider SLF4J pour faire taire le warning "No SLF4J providers were found"
+                implementation(libs.slf4j.simple)
             }
         }
     }

@@ -4,6 +4,10 @@ import com.russhwolf.settings.Settings
 import fr.zesit.admin.bridge.ApnsBridge
 import fr.zesit.admin.data.NotificationRepository
 import fr.zesit.admin.data.SettingsRepository
+import fr.zesit.admin.kpi.KpiApi
+import fr.zesit.admin.kpi.KpiHypothesesStore
+import fr.zesit.admin.kpi.KpiSessionStore
+import fr.zesit.admin.kpi.createKpiApi
 import fr.zesit.admin.ntfy.NtfyApi
 import fr.zesit.admin.ntfy.createNtfyApi
 
@@ -18,6 +22,11 @@ class AppContainer {
     val settingsRepository = SettingsRepository(settings)
     val notificationRepository = NotificationRepository(settings)
     val api: NtfyApi = createNtfyApi()
+
+    // API du dashboard KPI (prévisionnel citronnade) + persistance session/hypothèses
+    val kpiApi: KpiApi = createKpiApi()
+    val kpiSessionStore = KpiSessionStore(settings)
+    val kpiHypothesesStore = KpiHypothesesStore(settings)
 
     // Référence explicite : rend ApnsBridge atteignable depuis l'API publique non-Compose,
     // donc exporté dans le header ObjC de ComposeApp.framework (appelé depuis Swift).

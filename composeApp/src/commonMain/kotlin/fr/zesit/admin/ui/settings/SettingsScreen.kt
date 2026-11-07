@@ -40,6 +40,10 @@ fun SettingsScreen(
     var token by remember(saved) { mutableStateOf(saved.token.orEmpty()) }
     var testResult by remember { mutableStateOf<String?>(null) }
 
+    var kpiBaseUrl by remember(saved) { mutableStateOf(saved.kpiBaseUrl) }
+    var kpiUser by remember(saved) { mutableStateOf(saved.kpiUser) }
+    var kpiPassword by remember(saved) { mutableStateOf(saved.kpiPassword) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -80,7 +84,7 @@ fun SettingsScreen(
         Spacer(Modifier.height(16.dp))
         Button(
             onClick = {
-                viewModel.saveSettings(AppSettings(baseUrl, topic, token))
+                viewModel.saveSettings(AppSettings(baseUrl, topic, token.ifBlank { null }, kpiBaseUrl, kpiUser, kpiPassword))
                 onBack()
             },
             modifier = Modifier.fillMaxWidth(),
@@ -91,18 +95,57 @@ fun SettingsScreen(
         Button(
             onClick = {
                 testResult = "Test en cours…"
-                viewModel.testConnection(AppSettings(baseUrl, topic, token)) { ok, err ->
+                viewModel.testConnection(AppSettings(baseUrl, topic, token.ifBlank { null })) { ok, err ->
                     testResult = if (ok) "✓ Connexion OK (auth acceptée)" else "✗ ${err ?: "échec"}"
                 }
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Tester la connexion")
+            Text("Tester la connexion ntfy")
         }
         testResult?.let {
             Spacer(Modifier.height(8.dp))
             Text(it, style = MaterialTheme.typography.bodySmall)
         }
+
+        Spacer(Modifier.height(32.dp))
+        Text("Serveur KPI (dashboard prévisionnel)", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = kpiBaseUrl,
+            onValueChange = { kpiBaseUrl = it },
+            label = { Text("URL du serveur KPI") },
+            placeholder = { Text("https://kpi.zesit.fr") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = kpiUser,
+            onValueChange = { kpiUser = it },
+            label = { Text("Utilisateur") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = kpiPassword,
+            onValueChange = { kpiPassword = it },
+            label = { Text("Mot de passe") },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(Modifier.height(24.dp))
+        Text(
+            "Dashboard KPI : connexion automatique à l'ouverture de la section KPI (POST /api/login). " +
+                "La session JWT est conservée 7 jours et renégociée automatiquement en cas d'expiration. " +
+                "En dev local, l'API Flask écoute sur http://localhost:8000.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
         Spacer(Modifier.height(24.dp))
         Text(

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kmp.library)
@@ -15,6 +17,13 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+
+    // Cible desktop (macOS/Windows/Linux) : l'app Compose Desktop embarque ce module
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
@@ -34,6 +43,11 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+        named("desktopMain") {
+            dependencies {
+                implementation(libs.ktor.client.okhttp)
+            }
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

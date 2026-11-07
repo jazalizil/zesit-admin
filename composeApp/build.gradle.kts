@@ -1,3 +1,4 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -34,6 +35,13 @@ kotlin {
         }
     }
 
+    // Cible desktop : fenêtre Compose Multiplatform autonome (équivalent macOS de l'app iOS)
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             // api (et pas implementation) : le framework ComposeApp doit exposer
@@ -54,6 +62,23 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+        }
+        named("desktopMain") {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+            }
+        }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "fr.zesit.admin.MainKt"
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "Zesit Admin"
+            packageVersion = "1.0.0"
+            description = "Administration des notifications ntfy (Zesit)"
         }
     }
 }

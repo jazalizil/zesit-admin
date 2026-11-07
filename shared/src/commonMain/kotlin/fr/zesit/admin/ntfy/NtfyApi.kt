@@ -10,14 +10,32 @@ import kotlinx.coroutines.flow.Flow
  * ntfy/server.yml), toutes les requêtes partent avec `Authorization: Bearer <token>`
  * (token ntfy `tk_…`, provisionné via `ntfy token add <user>`).
  */
+/**
+ * Événements du flux temps réel ([NtfyApi.connect]) : messages d'une part,
+ * état de la connexion WebSocket d'autre part — l'UI peut ainsi afficher
+ * « connecté / hors ligne » en se basant sur un état observable et non une
+ * supposition.
+ */
+sealed interface NtfyEvent {
+    /** Connexion WebSocket établie. */
+    data object Connected : NtfyEvent
+
+    /** Connexion perdue ; la reconnexion (backoff) est déjà engagée par l'API. */
+    data class Disconnected(val cause: String?) : NtfyEvent
+
+    /** Vraie notification (les événements keepalive/open sont filtrés). */
+    data class Message(val message: NtfyMessage) : NtfyEvent
+}
+
 interface NtfyApi {
 
     /**
      * Flux temps réel des notifications du topic via WebSocket (`wss://<base>/<topic>/ws`).
-     * Reconnexion automatique avec backoff. Ne retourne que les vraies notifications
-     * (filtre les événements keepalive/open).
+     * Reconnexion automatique avec backoff exponentiel (5 s → 60 s). Émet
+     * [NtfyEvent.Connected] / [NtfyEvent.Disconnected] pour refléter l'état
+     * réel de la connexion, et [NtfyEvent.Message] pour les vraies notifications.
      */
-    fun connect(baseUrl: String, topic: String, token: String?): Flow<NtfyMessage>
+    fun connect(baseUrl: String, topic: String, token: String?): Flow<NtfyEvent>
 
     /**
      * Poll de l'historique : `GET /<topic>/json?poll=1[&since=<id>]` (flux NDJSON).

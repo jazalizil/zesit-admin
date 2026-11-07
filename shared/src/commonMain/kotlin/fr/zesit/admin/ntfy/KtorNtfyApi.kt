@@ -38,9 +38,10 @@ private data class ApnsDeviceRequest(
 
 internal class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
 
-    override fun connect(baseUrl: String, topic: String, token: String?): Flow<NtfyMessage> =
+    override fun connect(baseUrl: String, topic: String, token: String?): Flow<NtfyEvent> =
         flow {
             val wsUrl = baseUrl.toWsUrl().trimEnd('/') + "/$topic/ws"
+            var backoffMs = RECONNECT_DELAY_MS
             while (true) {
                 val session = try {
                     client.webSocketSession {
@@ -49,22 +50,30 @@ internal class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
                             ?.let { header(HttpHeaders.Authorization, "Bearer $it") }
                     }
                 } catch (e: Exception) {
-                    delay(RECONNECT_DELAY_MS) // serveur injoignable : on retente
+                    // serveur injoignable : on notifie puis retente (backoff exponentiel)
+                    emit(NtfyEvent.Disconnected(e.message))
+                    delay(backoffMs)
+                    backoffMs = (backoffMs * 2).coerceAtMost(MAX_RECONNECT_DELAY_MS)
                     continue
                 }
+                // connexion établie : on notifie et réinitialise le backoff
+                backoffMs = RECONNECT_DELAY_MS
+                emit(NtfyEvent.Connected)
                 try {
                     while (true) {
                         val frame = session.incoming.receive()
                         if (frame is Frame.Text) {
                             val msg = runCatching { json.decodeFromString<NtfyMessage>(frame.readText()) }.getOrNull()
-                            if (msg != null && msg.isNotification) emit(msg)
+                            if (msg != null && msg.isNotification) emit(NtfyEvent.Message(msg))
                         }
                     }
                 } catch (e: Exception) {
-                    // WS fermée (réseau, serveur redémarré…) : on reboucle et reconnecte
+                    // WS fermée (réseau, serveur redémarré…) : on notifie et reboucle
+                    emit(NtfyEvent.Disconnected(e.message))
                 }
                 try { session.cancel() } catch (_: Exception) {}
-                delay(RECONNECT_DELAY_MS)
+                delay(backoffMs)
+                backoffMs = (backoffMs * 2).coerceAtMost(MAX_RECONNECT_DELAY_MS)
             }
         }
 
@@ -136,6 +145,7 @@ internal class KtorNtfyApi(private val client: HttpClient) : NtfyApi {
 
     private companion object {
         const val RECONNECT_DELAY_MS = 5_000L
+        const val MAX_RECONNECT_DELAY_MS = 60_000L
     }
 }
 

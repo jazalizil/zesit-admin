@@ -7,6 +7,7 @@ import fr.zesit.admin.data.AppSettings
 import fr.zesit.admin.di.AppContainer
 import fr.zesit.admin.model.Notification
 import fr.zesit.admin.ntfy.NtfyApi
+import fr.zesit.admin.ntfy.NtfyEvent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,6 +56,7 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
         currentSettings = settings
         _uiState.value = _uiState.value.copy(
             configured = settings.isConfigured,
+            connected = false, // la nouvelle WS n'est pas encore établie
             lastError = null,
             apnsStatus = null,
         )
@@ -75,9 +77,21 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(lastError = e.message)
         }
-        api.connect(settings.baseUrl, settings.topic, settings.token).collect { msg ->
-            container.notificationRepository.addAll(listOf(msg))
-            _uiState.value = _uiState.value.copy(connected = true, lastError = null)
+        api.connect(settings.baseUrl, settings.topic, settings.token).collect { event ->
+            when (event) {
+                NtfyEvent.Connected ->
+                    _uiState.value = _uiState.value.copy(connected = true)
+
+                // La reconnexion (backoff) est déjà engagée par l'API ; l'UI affiche
+                // l'état réel au lieu d'un « Connecté » périmé.
+                is NtfyEvent.Disconnected ->
+                    _uiState.value = _uiState.value.copy(connected = false)
+
+                is NtfyEvent.Message -> {
+                    container.notificationRepository.addAll(listOf(event.message))
+                    _uiState.value = _uiState.value.copy(connected = true, lastError = null)
+                }
+            }
         }
     }
 

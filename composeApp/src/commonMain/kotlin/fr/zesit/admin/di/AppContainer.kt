@@ -1,6 +1,5 @@
 package fr.zesit.admin.di
 
-import com.russhwolf.settings.Settings
 import fr.zesit.admin.bridge.ApnsBridge
 import fr.zesit.admin.data.NotificationRepository
 import fr.zesit.admin.data.SettingsRepository
@@ -15,21 +14,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * Conteneur d'injection minimal (pas de Koin/Hilt pour rester léger) :
- * un seul [NtfyApi] Ktor par plateforme, un [SettingsRepository] et un
- * [NotificationRepository] persistants.
+ * Conteneur d'injection minimal (pas de Koin/Hilt pour rester léger). Deux
+ * stockages Settings par plateforme : `secureSettings` pour les credentials
+ * (token ntfy, JWT KPI — Keychain iOS / EncryptedSharedPreferences Android),
+ * `cacheSettings` pour le reste sans secret (historique, hypothèses KPI).
  */
 class AppContainer {
-    private val settings: Settings = Settings()
+    // Réglages (avec le token ntfy) : stockage sécurisé par plateforme.
+    private val secureSettings = createSecureSettings()
 
-    val settingsRepository = SettingsRepository(settings)
-    val notificationRepository = NotificationRepository(settings)
+    // Cache de l'historique : stockage standard (aucun secret dedans).
+    private val cacheSettings = createCacheSettings()
+
+    // Réglages (avec le token ntfy) : stockage sécurisé par plateforme,
+    // migrés une fois depuis l'ancien stockage non chiffré s'il existe.
+    val settingsRepository = SettingsRepository(secureSettings, legacySettings = createLegacySettings())
+    val notificationRepository = NotificationRepository(cacheSettings)
     val api: NtfyApi = createNtfyApi()
 
-    // API du dashboard KPI (prévisionnel citronnade) + persistance session/hypothèses
+    // API du dashboard KPI (prévisionnel citronnade) + persistance session/hypothèses.
+    // Le JWT KPI est un credential → stockage sécurisé ; les hypothèses sans
+    // secret → stockage standard.
     val kpiApi: KpiApi = createKpiApi()
-    val kpiSessionStore = KpiSessionStore(settings)
-    val kpiHypothesesStore = KpiHypothesesStore(settings)
+    val kpiSessionStore = KpiSessionStore(secureSettings)
+    val kpiHypothesesStore = KpiHypothesesStore(cacheSettings)
 
     // Session KPI partagée (KPI + Réel/Prévisionnel) — scope applicatif
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

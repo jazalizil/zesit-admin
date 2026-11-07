@@ -62,6 +62,8 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            // EncryptedSharedPreferences pour le stockage sécurisé du token ntfy
+            implementation(libs.androidx.security.crypto)
         }
         named("desktopMain") {
             dependencies {

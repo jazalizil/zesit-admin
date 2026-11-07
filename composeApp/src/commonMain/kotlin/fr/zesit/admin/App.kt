@@ -1,13 +1,19 @@
 package fr.zesit.admin
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -18,11 +24,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.zesit.admin.bridge.ApnsBridge
 import fr.zesit.admin.bridge.ApnsTokenHandler
 import fr.zesit.admin.di.AppContainer
+import fr.zesit.admin.ui.kpi.KpiScreen
+import fr.zesit.admin.ui.nav.DashboardSection
 import fr.zesit.admin.ui.notifications.NotificationsScreen
+import fr.zesit.admin.ui.realforecast.RealForecastScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
 import fr.zesit.admin.ui.theme.ZesitAdminTheme
 import fr.zesit.admin.viewmodel.NotificationsViewModel
@@ -40,37 +50,87 @@ fun App(container: AppContainer = remember { AppContainer() }) {
         }
 
         var showSettings by remember { mutableStateOf(false) }
+        // Navigation du dashboard : KPI (accueil), Réel/Prévisionnel, Notifications
+        var section by remember { mutableStateOf(DashboardSection.Kpi) }
 
-        Scaffold(
-            // Plein écran : le fond couvre tout l'écran (status bar / home indicator
-            // inclus) ; le contenu reste paddé par les safe-area insets (défaut).
-            modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                TopAppBar(
-                    title = { Text(if (showSettings) "Réglages" else "Zesit Admin") },
-                    actions = {
-                        IconButton(onClick = { showSettings = !showSettings }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Réglages",
-                            )
+        BoxWithConstraints {
+            // Navigation responsive : rail latéral sur fenêtre large (desktop),
+            // barre du bas sur écran étroit (iOS/Android).
+            val useRail = maxWidth >= 600.dp
+
+            Scaffold(
+                // Plein écran : le fond couvre tout l'écran (status bar / home indicator
+                // inclus) ; le contenu reste paddé par les safe-area insets (défaut).
+                modifier = Modifier.fillMaxSize(),
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = {
+                    TopAppBar(
+                        title = { Text(if (showSettings) "Réglages" else section.label) },
+                        actions = {
+                            IconButton(onClick = { showSettings = !showSettings }) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Réglages",
+                                )
+                            }
+                        },
+                    )
+                },
+                bottomBar = {
+                    if (!useRail && !showSettings) {
+                        NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
+                            DashboardSection.entries.forEach { dest ->
+                                NavigationBarItem(
+                                    selected = section == dest,
+                                    onClick = { section = dest },
+                                    icon = { Icon(dest.icon, contentDescription = dest.label) },
+                                    label = { Text(dest.label) },
+                                )
+                            }
                         }
-                    },
-                )
-            },
-        ) { padding ->
-            if (showSettings) {
-                SettingsScreen(
-                    viewModel = viewModel,
-                    modifier = Modifier.padding(padding),
-                    onBack = { showSettings = false },
-                )
-            } else {
-                NotificationsScreen(
-                    viewModel = viewModel,
-                    modifier = Modifier.padding(padding),
-                )
+                    }
+                },
+            ) { padding ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                ) {
+                    if (useRail && !showSettings) {
+                        NavigationRail(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            header = {
+                                Text(
+                                    "Zesit Admin",
+                                    style = MaterialTheme.typography.titleSmall,
+                                )
+                            },
+                        ) {
+                            DashboardSection.entries.forEach { dest ->
+                                NavigationRailItem(
+                                    selected = section == dest,
+                                    onClick = { section = dest },
+                                    icon = { Icon(dest.icon, contentDescription = dest.label) },
+                                    label = { Text(dest.label) },
+                                )
+                            }
+                        }
+                    }
+
+                    when {
+                        showSettings -> SettingsScreen(
+                            viewModel = viewModel,
+                            modifier = Modifier.weight(1f),
+                            onBack = { showSettings = false },
+                        )
+                        section == DashboardSection.Kpi -> KpiScreen(Modifier.weight(1f))
+                        section == DashboardSection.RealForecast -> RealForecastScreen(Modifier.weight(1f))
+                        section == DashboardSection.Notifications -> NotificationsScreen(
+                            viewModel = viewModel,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
             }
         }
     }

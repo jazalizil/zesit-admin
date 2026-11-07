@@ -7,6 +7,9 @@ struct ZesitAdminApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                // Plein écran : la vue Compose couvre aussi la status bar et le home indicator
+                // (Compose reçoit quand même les safe area insets et padde le contenu).
+                .ignoresSafeArea()
         }
     }
 }

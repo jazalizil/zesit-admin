@@ -10,6 +10,8 @@ import fr.zesit.admin.kpi.KpiSessionStore
 import fr.zesit.admin.kpi.createKpiApi
 import fr.zesit.admin.ntfy.NtfyApi
 import fr.zesit.admin.ntfy.createNtfyApi
+import fr.zesit.admin.traffic.TrafficApi
+import fr.zesit.admin.traffic.createTrafficApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +35,9 @@ class AppContainer {
     val notificationRepository = NotificationRepository(cacheSettings)
     val api: NtfyApi = createNtfyApi()
     val themeRepository = ThemeRepository(cacheSettings)
+
+    // Dashboard d'analyse du trafic (traffic-inspector /ti-api — VPN-only).
+    val trafficApi: TrafficApi = createTrafficApi()
 
     // API du dashboard KPI (prévisionnel citronnade) + persistance session/hypothèses.
     // Le JWT KPI est un credential → stockage sécurisé ; les hypothèses sans

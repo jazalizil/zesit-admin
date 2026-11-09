@@ -37,10 +37,12 @@ import fr.zesit.admin.ui.nav.DashboardSection
 import fr.zesit.admin.ui.notifications.NotificationsScreen
 import fr.zesit.admin.ui.realforecast.RealForecastScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
+import fr.zesit.admin.ui.traffic.TrafficScreen
 import fr.zesit.admin.ui.theme.ZesitAdminTheme
 import fr.zesit.admin.viewmodel.KpiViewModel
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import fr.zesit.admin.viewmodel.NotificationsViewModel
+import fr.zesit.admin.viewmodel.TrafficViewModel
 
 /**
  * Racine de l'app (thème + ViewModels + navigation + sections du dashboard).
@@ -67,6 +69,8 @@ internal fun DefaultApp(container: AppContainer) {
         val kpiViewModel: KpiViewModel = viewModel { KpiViewModel(container) }
         val medusaViewModel: MedusaViewModel =
             viewModel { MedusaViewModel(container, kpiViewModel.currentInputs) }
+        val trafficViewModel: TrafficViewModel =
+            viewModel { TrafficViewModel(container) }
 
         // Branche le pont APNs : l'AppDelegate Swift pousse le device token ici (iOS uniquement)
         DisposableEffect(Unit) {
@@ -158,6 +162,10 @@ internal fun DefaultApp(container: AppContainer) {
                         )
                         section == DashboardSection.Notifications -> NotificationsScreen(
                             viewModel = viewModel,
+                            modifier = Modifier.weight(1f),
+                        )
+                        section == DashboardSection.Traffic -> TrafficScreen(
+                            viewModel = trafficViewModel,
                             modifier = Modifier.weight(1f),
                         )
                     }

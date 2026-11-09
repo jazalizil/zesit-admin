@@ -202,3 +202,67 @@ private fun ConnectButton(connecting: Boolean, enabled: Boolean, onClick: () -> 
         }
     }
 }
+
+/**
+ * Panneau de connexion traffic-inspector, affiché par la page Traffic quand le
+ * serveur n'est pas configuré. L'API /ti-api est VPN-only (Caddy/WireGuard) et
+ * s'authentifie par le token statique TI_API_TOKEN défini côté VPS.
+ */
+@Composable
+fun TrafficAuthPanel(
+    savedBaseUrl: String,
+    savedToken: String,
+    error: String?,
+    onConnect: (baseUrl: String, token: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var baseUrl by remember(savedBaseUrl) { mutableStateOf(savedBaseUrl) }
+    var token by remember(savedToken) { mutableStateOf(savedToken) }
+
+    StatePanel(modifier) {
+        Text("Connexion à traffic-inspector", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Renseignez l'URL du serveur (/ti-api, VPN-only via WireGuard) et le " +
+                "token statique TI_API_TOKEN défini sur le VPS.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(16.dp))
+        OutlinedTextField(
+            value = baseUrl,
+            onValueChange = { baseUrl = it },
+            label = { Text("URL du serveur") },
+            placeholder = { Text("https://traffic.zesit.fr") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = token,
+            onValueChange = { token = it },
+            label = { Text("Token TI (Bearer …)") },
+            placeholder = { Text("Token TI_API_TOKEN du VPS") },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
+        )
+        Spacer(Modifier.height(16.dp))
+        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank() && token.isNotBlank()) {
+            onConnect(baseUrl, token)
+        }
+        error?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}

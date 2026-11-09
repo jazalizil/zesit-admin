@@ -28,10 +28,12 @@ import fr.zesit.admin.ui.nav.SideMenu
 import fr.zesit.admin.ui.notifications.NotificationsScreen
 import fr.zesit.admin.ui.realforecast.RealForecastScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
+import fr.zesit.admin.ui.traffic.TrafficScreen
 import fr.zesit.admin.ui.theme.ZesitAdminTheme
 import fr.zesit.admin.viewmodel.KpiViewModel
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import fr.zesit.admin.viewmodel.NotificationsViewModel
+import fr.zesit.admin.viewmodel.TrafficViewModel
 
 /**
  * Variante desktop de la racine de l'app : layout à menu latéral —
@@ -57,6 +59,8 @@ actual fun App(container: AppContainer) {
         val kpiViewModel: KpiViewModel = viewModel { KpiViewModel(container) }
         val medusaViewModel: MedusaViewModel =
             viewModel { MedusaViewModel(container, kpiViewModel.currentInputs) }
+        val trafficViewModel: TrafficViewModel =
+            viewModel { TrafficViewModel(container) }
 
         // Navigation du dashboard : KPI (accueil), Réel/Prévisionnel, Notifications
         var section by remember { mutableStateOf(DashboardSection.Kpi) }
@@ -125,6 +129,12 @@ actual fun App(container: AppContainer) {
                     )
                     section == DashboardSection.Notifications -> NotificationsScreen(
                         viewModel = viewModel,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                    )
+                    section == DashboardSection.Traffic -> TrafficScreen(
+                        viewModel = trafficViewModel,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),

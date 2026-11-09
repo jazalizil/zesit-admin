@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Traffic
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -25,5 +26,10 @@ enum class DashboardSection(val label: String, val description: String, val icon
         label = "Notifications",
         description = "Flux ntfy en temps réel",
         icon = Icons.Default.Notifications,
+    ),
+    Traffic(
+        label = "Traffic",
+        description = "Trafic web — traffic-inspector",
+        icon = Icons.Default.Traffic,
     ),
 }

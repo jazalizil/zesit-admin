@@ -19,6 +19,9 @@ data class AppSettings(
     val kpiBaseUrl: String = "",
     val kpiUser: String = "",
     val kpiPassword: String = "",
+    // Connexion à traffic-inspector (/ti-api — VPN-only, token statique TI_API_TOKEN)
+    val trafficBaseUrl: String = "",
+    val trafficToken: String = "",
 ) {
     /** true si baseUrl + topic sont renseignés (le token reste optionnel). */
     val isConfigured: Boolean
@@ -35,4 +38,12 @@ data class AppSettings(
     /** baseUrl KPI normalisée pour les appels API (sans slash final). */
     val normalizedKpiBaseUrl: String
         get() = kpiBaseUrl.trim().trimEnd('/')
+
+    /** true si l'URL de traffic-inspector est renseignée (le token reste requis côté serveur). */
+    val isTrafficConfigured: Boolean
+        get() = trafficBaseUrl.isNotBlank()
+
+    /** baseUrl traffic-inspector normalisée pour les appels API (sans slash final). */
+    val normalizedTrafficBaseUrl: String
+        get() = trafficBaseUrl.trim().trimEnd('/')
 }

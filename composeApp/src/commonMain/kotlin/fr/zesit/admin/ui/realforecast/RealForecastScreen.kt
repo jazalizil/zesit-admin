@@ -17,9 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.PowerOff
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -47,7 +45,7 @@ import fr.zesit.admin.kpi.MedusaChannel
 import fr.zesit.admin.kpi.MedusaComparison
 import fr.zesit.admin.kpi.MedusaStatus
 import fr.zesit.admin.kpi.MedusaVariant
-import fr.zesit.admin.ui.common.StatePanel
+import fr.zesit.admin.ui.common.KpiAuthPanel
 import fr.zesit.admin.ui.kpi.Chart
 import fr.zesit.admin.ui.kpi.ChartAreaAmber
 import fr.zesit.admin.ui.kpi.ChartCard
@@ -67,6 +65,11 @@ import kotlin.math.abs
  * (zesit-kpi/apps/web) : ventes Medusa synchronisées (1×/jour côté serveur)
  * comparées au prévisionnel du modèle chargé dans la section KPI.
  *
+ * L'authentification au serveur KPI vit ici (état non connecté, même session
+ * que la page KPI) : le panneau de connexion remplace l'ancien renvoi vers les
+ * Réglages ; une fois connecté, la barre de période expose une Déconnexion
+ * (power_off).
+ *
  * Composant « expect » : l'agencement par plateforme vit dans l'`actual`
  * (desktop : desktopMain) ; l'agencement commun de référence est
  * [DefaultRealForecastScreen].
@@ -75,82 +78,30 @@ import kotlin.math.abs
 expect fun RealForecastScreen(
     viewModel: MedusaViewModel,
     modifier: Modifier = Modifier,
-    onOpenSettings: () -> Unit = {},
 )
 
 @Composable
 internal fun DefaultRealForecastScreen(
     viewModel: MedusaViewModel,
     modifier: Modifier = Modifier,
-    onOpenSettings: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
+    val settings by viewModel.settings.collectAsState()
 
     when {
-        !state.configured -> UnconfiguredState(modifier, onOpenSettings)
-        !state.connected -> DisconnectedState(state, modifier, onOpenSettings) { viewModel.reconnect() }
+        // Non connecté (jamais configuré, déconnexion ou identifiants refusés) :
+        // panneau d'authentification sur la page même. Une session en cours de
+        // login (configurée, sans erreur) affiche une progression.
+        !state.connected -> KpiAuthPanel(
+            savedBaseUrl = settings.kpiBaseUrl,
+            savedUser = settings.kpiUser,
+            savedPassword = settings.kpiPassword,
+            connecting = state.configured && state.error == null,
+            error = state.error,
+            onConnect = viewModel::connectKpi,
+            modifier = modifier,
+        )
         else -> Content(state, viewModel, modifier)
-    }
-}
-
-// --- Etats session ---
-
-@Composable
-private fun UnconfiguredState(modifier: Modifier, onOpenSettings: () -> Unit) {
-    StatePanel(modifier) {
-        Icon(
-            Icons.Default.Settings,
-            contentDescription = null,
-            modifier = Modifier.size(56.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(16.dp))
-        Text("Serveur KPI non configuré", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Renseignez l'URL du serveur KPI et vos identifiants dans les réglages (⚙) " +
-                "pour comparer les ventes réelles (Medusa) au prévisionnel.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onOpenSettings) { Text("Ouvrir les réglages") }
-    }
-}
-
-@Composable
-private fun DisconnectedState(
-    state: MedusaUiState,
-    modifier: Modifier,
-    onOpenSettings: () -> Unit,
-    onRetry: () -> Unit,
-) {
-    StatePanel(modifier) {
-        if (state.error == null) {
-            CircularProgressIndicator()
-            Spacer(Modifier.height(16.dp))
-            Text("Connexion au serveur KPI…", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Icon(
-                Icons.Default.CloudOff,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = MaterialTheme.colorScheme.error,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                state.error,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onRetry) { Text("Réessayer") }
-                OutlinedButton(onClick = onOpenSettings) { Text("Réglages") }
-            }
-        }
     }
 }
 
@@ -248,6 +199,15 @@ private fun PeriodBar(
                 }
                 OutlinedButton(onClick = onToggleMapping) {
                     Text(if (showMapping) "Masquer le mapping" else "Mapping variantes / canaux")
+                }
+                OutlinedButton(onClick = viewModel::disconnect) {
+                    Icon(
+                        Icons.Default.PowerOff,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Déconnexion")
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {

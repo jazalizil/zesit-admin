@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.zesit.admin.apns.ApnsRegistrar
 import fr.zesit.admin.data.AppSettings
+import fr.zesit.admin.data.ThemeMode
 import fr.zesit.admin.di.AppContainer
 import fr.zesit.admin.model.Notification
 import fr.zesit.admin.ntfy.NtfyApi
@@ -32,6 +33,9 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
     val settings: StateFlow<AppSettings> get() = container.settingsRepository.appSettings
+
+    /** Préférence d'apparence (écran Réglages) — appliquée à la racine de l'app. */
+    val themeMode: StateFlow<ThemeMode> get() = container.themeRepository.themeMode
 
     private var collectorJob: Job? = null
 
@@ -65,6 +69,10 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
             collectorJob = viewModelScope.launch {
                 syncThenListen(settings)
             }
+        } else if (!settings.isConfigured) {
+            // Déconnexion ntfy (ou réinitialisation) : stoppe l'écoute du topic précédent.
+            collectorJob?.cancel()
+            collectorJob = null
         }
     }
 
@@ -119,6 +127,42 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
 
     fun saveSettings(newSettings: AppSettings) {
         container.settingsRepository.save(newSettings)
+    }
+
+    /** Connexion ntfy depuis la page Notifications (état non connecté). */
+    fun connectNtfy(baseUrl: String, topic: String, token: String) {
+        val current = container.settingsRepository.appSettings.value
+        container.settingsRepository.save(
+            current.copy(
+                baseUrl = baseUrl.trim().trimEnd('/'),
+                topic = topic.trim(),
+                token = token.trim().ifBlank { null },
+            ),
+        )
+    }
+
+    /** Déconnexion ntfy (bouton power de la page Notifications) : efface les réglages ntfy. */
+    fun disconnectNtfy() {
+        val current = container.settingsRepository.appSettings.value
+        container.settingsRepository.save(current.copy(baseUrl = "", topic = "", token = null))
+    }
+
+    /** Change le mode d'apparence (écran Réglages) : Système / Clair / Sombre. */
+    fun setTheme(mode: ThemeMode) {
+        container.themeRepository.set(mode)
+    }
+
+    /**
+     * Réinitialisation des données (écran Réglages) : efface credentials ntfy
+     * + KPI, la session JWT, l'historique des notifications et les hypothèses
+     * KPI. L'apparence et les autres préférences sont conservées. Les écrans
+     * réagissent via les StateFlow (retour aux panneaux de connexion).
+     */
+    fun resetData() {
+        container.settingsRepository.save(AppSettings())
+        container.kpiSessionStore.set(null)
+        container.kpiHypothesesStore.clear()
+        container.notificationRepository.clear()
     }
 
     /** Test de connexion (auth ntfy) depuis l'écran réglages. */

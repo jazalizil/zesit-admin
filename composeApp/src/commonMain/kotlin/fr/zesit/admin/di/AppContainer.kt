@@ -3,6 +3,7 @@ package fr.zesit.admin.di
 import fr.zesit.admin.bridge.ApnsBridge
 import fr.zesit.admin.data.NotificationRepository
 import fr.zesit.admin.data.SettingsRepository
+import fr.zesit.admin.data.ThemeRepository
 import fr.zesit.admin.kpi.KpiApi
 import fr.zesit.admin.kpi.KpiHypothesesStore
 import fr.zesit.admin.kpi.KpiSessionStore
@@ -31,6 +32,7 @@ class AppContainer {
     val settingsRepository = SettingsRepository(secureSettings, legacySettings = createLegacySettings())
     val notificationRepository = NotificationRepository(cacheSettings)
     val api: NtfyApi = createNtfyApi()
+    val themeRepository = ThemeRepository(cacheSettings)
 
     // API du dashboard KPI (prévisionnel citronnade) + persistance session/hypothèses.
     // Le JWT KPI est un credential → stockage sécurisé ; les hypothèses sans

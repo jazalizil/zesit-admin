@@ -1,7 +1,9 @@
 package fr.zesit.admin.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,12 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,10 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import fr.zesit.admin.data.AppSettings
+import fr.zesit.admin.data.ThemeMode
 import fr.zesit.admin.viewmodel.NotificationsViewModel
 
 /**
@@ -41,27 +43,24 @@ expect fun SettingsScreen(
     onBack: () -> Unit = {},
 )
 
+/**
+ * Réglages de l'app — liste à texte (gauche) / valeur (droite) :
+ *  - Apparence : cycle Système → Clair → Sombre (appliqué immédiatement)
+ *  - Réinitialiser les données : efface credentials + session + caches
+ *    (confirmation)
+ *  - Version
+ * Les identifiants ntfy / KPI se saisissent désormais depuis les pages du
+ * dashboard (panneau de connexion en état non connecté).
+ */
 @Composable
 internal fun DefaultSettingsScreen(
     viewModel: NotificationsViewModel,
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {},
 ) {
-    val current by viewModel.uiState.collectAsState()
-    val saved by viewModel.settings.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
+    var showResetDialog by remember { mutableStateOf(false) }
 
-    var baseUrl by remember(saved) { mutableStateOf(saved.baseUrl) }
-    var topic by remember(saved) { mutableStateOf(saved.topic) }
-    var token by remember(saved) { mutableStateOf(saved.token.orEmpty()) }
-    var testResult by remember { mutableStateOf<String?>(null) }
-
-    var kpiBaseUrl by remember(saved) { mutableStateOf(saved.kpiBaseUrl) }
-    var kpiUser by remember(saved) { mutableStateOf(saved.kpiUser) }
-    var kpiPassword by remember(saved) { mutableStateOf(saved.kpiPassword) }
-
-    // Colonne de formulaire à largeur bornée et centrée (même pattern que
-    // KpiScreen/RealForecastScreen) : les inputs restent lisibles sur grand
-    // écran desktop sans padding droit fixe.
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             Modifier
@@ -71,116 +70,80 @@ internal fun DefaultSettingsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(Modifier.widthIn(max = 480.dp)) {
-        Text("Serveur ntfy", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = baseUrl,
-            onValueChange = { baseUrl = it },
-            label = { Text("URL du serveur") },
-            placeholder = { Text("https://ntfy.zesit.fr") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = topic,
-            onValueChange = { topic = it },
-            label = { Text("Topic (device id)") },
-            placeholder = { Text("zesit-…") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = token,
-            onValueChange = { token = it },
-            label = { Text("Token ntfy (Bearer tk_…)") },
-            placeholder = { Text("tk_…") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(32.dp))
-        Text("Serveur KPI (dashboard prévisionnel)", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = kpiBaseUrl,
-            onValueChange = { kpiBaseUrl = it },
-            label = { Text("URL du serveur KPI") },
-            placeholder = { Text("https://kpi.zesit.fr") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = kpiUser,
-            onValueChange = { kpiUser = it },
-            label = { Text("Utilisateur") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = kpiPassword,
-            onValueChange = { kpiPassword = it },
-            label = { Text("Mot de passe") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(24.dp))
-        Text(
-            "Dashboard KPI : connexion automatique à l'ouverture de la section KPI (POST /api/login). " +
-                "La session JWT est conservée 7 jours et renégociée automatiquement en cas d'expiration. " +
-                "En dev local, l'API Flask écoute sur http://localhost:8000.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Spacer(Modifier.height(24.dp))
-        Text(
-            "Authentification : le serveur ntfy du VPS est en deny-all — le token Bearer " +
-                "est envoyé sur toutes les requêtes (WebSocket, poll JSON, POST /v1/apns). " +
-                "Sur iOS, le device token APNs est enregistré automatiquement (POST /v1/apns) " +
-                "pour recevoir le push natif.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        current.apnsStatus?.let {
-            Spacer(Modifier.height(8.dp))
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-        }
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = {
-                viewModel.saveSettings(AppSettings(baseUrl, topic, token.ifBlank { null }, kpiBaseUrl, kpiUser, kpiPassword))
-                onBack()
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Enregistrer")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = {
-                testResult = "Test en cours…"
-                viewModel.testConnection(AppSettings(baseUrl, topic, token.ifBlank { null })) { ok, err ->
-                    testResult = if (ok) "✓ Connexion OK (auth acceptée)" else "✗ ${err ?: "échec"}"
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Tester la connexion ntfy")
-        }
-        testResult?.let {
-            Spacer(Modifier.height(8.dp))
-            Text(it, style = MaterialTheme.typography.bodySmall)
-        }
+                SettingsRow(
+                    label = "Apparence",
+                    value = themeMode.label,
+                    onClick = { viewModel.setTheme(nextThemeMode(themeMode)) },
+                )
+                HorizontalDivider()
+                SettingsRow(
+                    label = "Réinitialiser les données",
+                    value = "Réinitialiser",
+                    valueColor = MaterialTheme.colorScheme.error,
+                    onClick = { showResetDialog = true },
+                )
+                HorizontalDivider()
+                SettingsRow(label = "Version", value = "1.0.0")
             }
         }
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Réinitialiser les données ?") },
+            text = {
+                Text(
+                    "Efface les identifiants ntfy et KPI, la session, l'historique des " +
+                        "notifications et les hypothèses KPI. L'apparence est conservée. " +
+                        "Les pages du dashboard repasseront en mode connexion.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.resetData()
+                    showResetDialog = false
+                }) {
+                    Text("Réinitialiser", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) { Text("Annuler") }
+            },
+        )
+    }
+}
+
+/** Cycle d'apparence : Système → Clair → Sombre → Système. */
+private fun nextThemeMode(mode: ThemeMode): ThemeMode =
+    ThemeMode.entries[(mode.ordinal + 1) % ThemeMode.entries.size]
+
+/** Ligne de réglage : libellé à gauche, valeur (ou action) à droite. */
+@Composable
+private fun SettingsRow(
+    label: String,
+    value: String,
+    valueColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    onClick: (() -> Unit)? = null,
+) {
+    val rowModifier = if (onClick != null) {
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 18.dp)
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 18.dp)
+    }
+    Row(modifier = rowModifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.weight(1f))
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = valueColor,
+        )
     }
 }

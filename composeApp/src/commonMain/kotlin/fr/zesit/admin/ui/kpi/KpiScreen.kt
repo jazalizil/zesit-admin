@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PowerOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,12 +35,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.zesit.admin.kpi.KpiFmt
 import fr.zesit.admin.kpi.KpiInputs
 import fr.zesit.admin.kpi.KpiResponse
+import fr.zesit.admin.ui.common.KpiAuthPanel
 import fr.zesit.admin.ui.common.StatePanel
 import fr.zesit.admin.viewmodel.KpiUiState
 import fr.zesit.admin.viewmodel.KpiViewModel
@@ -53,6 +53,10 @@ private val TABS = listOf("📊 Année 1", "🌡️ Sensibilité", "🧾 Détail
  * (zesit-kpi/apps/web) : KPI cards, formats, hypothèses, graphiques, tableau
  * mensuel et modèles enregistrés.
  *
+ * L'authentification au serveur KPI vit ici (état non connecté) : le panneau
+ * de connexion remplace l'ancien renvoi vers les Réglages ; une fois connecté,
+ * l'en-tête expose une Déconnexion (power_off).
+ *
  * Composant « expect » : l'agencement par plateforme vit dans l'`actual`
  * (desktop : desktopMain, fichier par composant) ; l'agencement commun de
  * référence est [DefaultKpiScreen].
@@ -61,81 +65,40 @@ private val TABS = listOf("📊 Année 1", "🌡️ Sensibilité", "🧾 Détail
 expect fun KpiScreen(
     viewModel: KpiViewModel,
     modifier: Modifier = Modifier,
-    onOpenSettings: () -> Unit = {},
 )
 
 @Composable
 internal fun DefaultKpiScreen(
     viewModel: KpiViewModel,
     modifier: Modifier = Modifier,
-    onOpenSettings: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
+    val settings by viewModel.settings.collectAsState()
 
     when {
-        !state.configured -> UnconfiguredState(modifier, onOpenSettings)
-        state.inputs == null || state.model == null ->
-            LoadingState(state, modifier, onOpenSettings) { viewModel.reconnect() }
-        else -> DashboardContent(state, viewModel, modifier, onOpenSettings)
+        // Non connecté (jamais configuré, déconnexion ou identifiants refusés) :
+        // panneau d'authentification sur la page même. Une session en cours de
+        // login (configurée, sans erreur) affiche une progression.
+        !state.connected -> KpiAuthPanel(
+            savedBaseUrl = settings.kpiBaseUrl,
+            savedUser = settings.kpiUser,
+            savedPassword = settings.kpiPassword,
+            connecting = state.configured && state.error == null,
+            error = state.error,
+            onConnect = viewModel::connectKpi,
+            modifier = modifier,
+        )
+        state.inputs == null || state.model == null -> LoadingState(modifier)
+        else -> DashboardContent(state, viewModel, modifier)
     }
 }
 
 @Composable
-private fun UnconfiguredState(modifier: Modifier, onOpenSettings: () -> Unit) {
+private fun LoadingState(modifier: Modifier) {
     StatePanel(modifier) {
-        Icon(
-            Icons.Default.Settings,
-            contentDescription = null,
-            modifier = Modifier.size(56.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        CircularProgressIndicator()
         Spacer(Modifier.height(16.dp))
-        Text("Serveur KPI non configuré", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Renseignez l'URL du serveur KPI et vos identifiants dans les réglages (⚙) : " +
-                "le dashboard prévisionnel se chargera automatiquement.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onOpenSettings) { Text("Ouvrir les réglages") }
-    }
-}
-
-@Composable
-private fun LoadingState(
-    state: KpiUiState,
-    modifier: Modifier,
-    onOpenSettings: () -> Unit,
-    onRetry: () -> Unit,
-) {
-    StatePanel(modifier) {
-        if (state.error == null) {
-            CircularProgressIndicator()
-            Spacer(Modifier.height(16.dp))
-            Text("Chargement du prévisionnel…", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Icon(
-                Icons.Default.CloudOff,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = MaterialTheme.colorScheme.error,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                state.error,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onRetry) { Text("Réessayer") }
-                OutlinedButton(onClick = onOpenSettings) { Text("Réglages") }
-            }
-        }
+        Text("Chargement du prévisionnel…", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -144,7 +107,6 @@ private fun DashboardContent(
     state: KpiUiState,
     viewModel: KpiViewModel,
     modifier: Modifier,
-    onOpenSettings: () -> Unit,
 ) {
     val model = state.model ?: return
     val inputs = state.inputs ?: return
@@ -221,7 +183,15 @@ private fun Header(state: KpiUiState, viewModel: KpiViewModel) {
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedButton(onClick = viewModel::reset, enabled = !state.modelBusy) { Text("Réinitialiser") }
-            OutlinedButton(onClick = viewModel::logout) { Text("Déconnexion") }
+            OutlinedButton(onClick = viewModel::logout) {
+                Icon(
+                    Icons.Default.PowerOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Déconnexion")
+            }
             state.error?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }

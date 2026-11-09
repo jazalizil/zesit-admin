@@ -19,8 +19,8 @@ import fr.zesit.admin.viewmodel.KpiViewModel
  * remplacer le corps de l'actual concerné.
  */
 @Composable
-actual fun KpiScreen(viewModel: KpiViewModel, modifier: Modifier, onOpenSettings: () -> Unit) =
-    DefaultKpiScreen(viewModel, modifier, onOpenSettings)
+actual fun KpiScreen(viewModel: KpiViewModel, modifier: Modifier) =
+    DefaultKpiScreen(viewModel, modifier)
 
 @Composable
 actual fun KpiCard(label: String, value: String, sub: String?, tone: KpiTone, modifier: Modifier) =

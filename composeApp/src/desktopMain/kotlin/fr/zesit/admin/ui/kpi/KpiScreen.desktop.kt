@@ -13,5 +13,4 @@ import fr.zesit.admin.viewmodel.KpiViewModel
 actual fun KpiScreen(
     viewModel: KpiViewModel,
     modifier: Modifier,
-    onOpenSettings: () -> Unit,
-) = DefaultKpiScreen(viewModel, modifier, onOpenSettings)
+) = DefaultKpiScreen(viewModel, modifier)

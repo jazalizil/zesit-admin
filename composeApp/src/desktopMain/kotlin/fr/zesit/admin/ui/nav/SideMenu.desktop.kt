@@ -114,7 +114,7 @@ internal fun SideMenu(
         SideMenuItem(
             icon = Icons.Default.Settings,
             label = "Réglages",
-            caption = "Serveurs ntfy & KPI",
+            caption = "Apparence, données, version",
             selected = settingsOpen,
             onClick = onToggleSettings,
         )

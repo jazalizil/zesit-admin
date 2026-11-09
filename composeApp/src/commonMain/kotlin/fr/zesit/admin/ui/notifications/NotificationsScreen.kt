@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PowerOff
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -28,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.zesit.admin.model.Notification
+import fr.zesit.admin.ui.common.NtfyAuthPanel
+import fr.zesit.admin.viewmodel.NotificationsUiState
 import fr.zesit.admin.viewmodel.NotificationsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -50,7 +53,29 @@ internal fun DefaultNotificationsScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsState()
+    val settings by viewModel.settings.collectAsState()
 
+    when {
+        // Serveur ntfy non configuré : panneau de connexion sur la page même
+        // (remplace l'ancien renvoi vers les Réglages).
+        !state.configured -> NtfyAuthPanel(
+            savedBaseUrl = settings.baseUrl,
+            savedTopic = settings.topic,
+            savedToken = settings.token.orEmpty(),
+            error = state.lastError,
+            onConnect = viewModel::connectNtfy,
+            modifier = modifier,
+        )
+        else -> ConnectedNotifications(state, viewModel, modifier)
+    }
+}
+
+@Composable
+private fun ConnectedNotifications(
+    state: NotificationsUiState,
+    viewModel: NotificationsViewModel,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxSize()) {
         // Bandeau de statut
         Row(
@@ -67,25 +92,20 @@ internal fun DefaultNotificationsScreen(
                 }
             }
             Column(modifier = Modifier.weight(1f)) {
-                if (!state.configured) {
-                    Text(
-                        "Non configuré — ouvrir les réglages (⚙) pour renseigner serveur + topic + token.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                } else {
-                    Text(
-                        if (state.connected) "Connecté (temps réel)" else "Hors ligne — poll manuel",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (state.connected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    state.lastError?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                    }
-                    state.apnsStatus?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-                    }
+                Text(
+                    if (state.connected) "Connecté (temps réel)" else "Hors ligne — poll manuel",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (state.connected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                state.lastError?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
+                state.apnsStatus?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                }
+            }
+            IconButton(onClick = viewModel::disconnectNtfy) {
+                Icon(Icons.Default.PowerOff, contentDescription = "Déconnecter")
             }
         }
 
@@ -96,7 +116,7 @@ internal fun DefaultNotificationsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    if (state.configured) "Aucune notification pour le moment." else "Bienvenue dans Zesit Admin",
+                    "Aucune notification pour le moment.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

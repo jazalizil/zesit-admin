@@ -1,6 +1,7 @@
 package fr.zesit.admin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.zesit.admin.data.ThemeMode
 import fr.zesit.admin.di.AppContainer
 import fr.zesit.admin.ui.kpi.KpiScreen
 import fr.zesit.admin.ui.nav.DashboardSection
@@ -42,7 +45,15 @@ import fr.zesit.admin.viewmodel.NotificationsViewModel
  */
 @Composable
 actual fun App(container: AppContainer) {
-    ZesitAdminTheme {
+    // Apparence choisie dans les Réglages : Système par défaut, Clair/Sombre forcés.
+    val themeMode by container.themeRepository.themeMode.collectAsState()
+    ZesitAdminTheme(
+        darkTheme = when (themeMode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        },
+    ) {
         val viewModel: NotificationsViewModel = viewModel { NotificationsViewModel(container) }
         val kpiViewModel: KpiViewModel = viewModel { KpiViewModel(container) }
         val medusaViewModel: MedusaViewModel =
@@ -84,7 +95,7 @@ actual fun App(container: AppContainer) {
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
-                    if (showSettings) "Serveurs ntfy & KPI, identifiants de connexion" else section.description,
+                    if (showSettings) "Apparence, données, version" else section.description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -103,14 +114,12 @@ actual fun App(container: AppContainer) {
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
-                        onOpenSettings = { showSettings = true },
                     )
                     section == DashboardSection.RealForecast -> RealForecastScreen(
                         viewModel = medusaViewModel,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
-                        onOpenSettings = { showSettings = true },
                     )
                     section == DashboardSection.Notifications -> NotificationsScreen(
                         viewModel = viewModel,

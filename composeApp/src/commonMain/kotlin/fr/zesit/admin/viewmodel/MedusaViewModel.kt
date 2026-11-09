@@ -174,6 +174,27 @@ class MedusaViewModel(
         }
     }
 
+    /** Réglages KPI enregistrés (pré-remplissage du panneau de connexion). */
+    val settings get() = container.settingsRepository.appSettings
+
+    /**
+     * Connexion depuis la page Réel / Prévisionnel (même session KPI que la
+     * page KPI) : enregistre les identifiants puis relance la session.
+     */
+    fun connectKpi(baseUrl: String, user: String, password: String) {
+        container.settingsRepository.save(
+            container.settingsRepository.appSettings.value.copy(
+                kpiBaseUrl = baseUrl.trim().trimEnd('/'),
+                kpiUser = user.trim(),
+                kpiPassword = password,
+            ),
+        )
+        session.reconnect()
+    }
+
+    /** Déconnexion (bouton power de la page Réel / Prévisionnel). */
+    fun disconnect() = session.logout()
+
     /** Reconnexion explicite (après logout ou erreur d'identifiants). */
     fun reconnect() = session.reconnect()
 

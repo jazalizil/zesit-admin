@@ -222,6 +222,24 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     // --- Session ---
 
+    /** Réglages KPI enregistrés (pré-remplissage du panneau de connexion). */
+    val settings get() = container.settingsRepository.appSettings
+
+    /**
+     * Connexion depuis la page KPI (état non connecté) : enregistre les
+     * identifiants puis relance la session (login automatique par KpiSession).
+     */
+    fun connectKpi(baseUrl: String, user: String, password: String) {
+        container.settingsRepository.save(
+            container.settingsRepository.appSettings.value.copy(
+                kpiBaseUrl = baseUrl.trim().trimEnd('/'),
+                kpiUser = user.trim(),
+                kpiPassword = password,
+            ),
+        )
+        session.reconnect()
+    }
+
     fun logout() = session.logout()
 
     /** Reconnexion explicite (après logout ou erreur d'identifiants). */

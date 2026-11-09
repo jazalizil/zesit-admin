@@ -9,5 +9,4 @@ import fr.zesit.admin.viewmodel.MedusaViewModel
 actual fun RealForecastScreen(
     viewModel: MedusaViewModel,
     modifier: Modifier,
-    onOpenSettings: () -> Unit,
-) = DefaultRealForecastScreen(viewModel, modifier, onOpenSettings)
+) = DefaultRealForecastScreen(viewModel, modifier)

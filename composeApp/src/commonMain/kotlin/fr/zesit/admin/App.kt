@@ -1,5 +1,6 @@
 package fr.zesit.admin
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.zesit.admin.bridge.ApnsBridge
 import fr.zesit.admin.bridge.ApnsTokenHandler
+import fr.zesit.admin.data.ThemeMode
 import fr.zesit.admin.di.AppContainer
 import fr.zesit.admin.ui.kpi.KpiScreen
 import fr.zesit.admin.ui.nav.DashboardSection
@@ -51,7 +54,15 @@ expect fun App(container: AppContainer)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DefaultApp(container: AppContainer) {
-    ZesitAdminTheme {
+    // Apparence choisie dans les Réglages : Système par défaut, Clair/Sombre forcés.
+    val themeMode by container.themeRepository.themeMode.collectAsState()
+    ZesitAdminTheme(
+        darkTheme = when (themeMode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        },
+    ) {
         val viewModel: NotificationsViewModel = viewModel { NotificationsViewModel(container) }
         val kpiViewModel: KpiViewModel = viewModel { KpiViewModel(container) }
         val medusaViewModel: MedusaViewModel =
@@ -140,12 +151,10 @@ internal fun DefaultApp(container: AppContainer) {
                         section == DashboardSection.Kpi -> KpiScreen(
                             viewModel = kpiViewModel,
                             modifier = Modifier.weight(1f),
-                            onOpenSettings = { showSettings = true },
                         )
                         section == DashboardSection.RealForecast -> RealForecastScreen(
                             viewModel = medusaViewModel,
                             modifier = Modifier.weight(1f),
-                            onOpenSettings = { showSettings = true },
                         )
                         section == DashboardSection.Notifications -> NotificationsScreen(
                             viewModel = viewModel,

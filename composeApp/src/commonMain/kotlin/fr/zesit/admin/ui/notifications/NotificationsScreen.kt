@@ -62,6 +62,7 @@ internal fun DefaultNotificationsScreen(
             savedBaseUrl = settings.baseUrl,
             savedTopic = settings.topic,
             savedToken = settings.token.orEmpty(),
+            defaultBaseUrl = viewModel.env.ntfyBaseUrlDefault,
             error = state.lastError,
             onConnect = viewModel::connectNtfy,
             modifier = modifier,

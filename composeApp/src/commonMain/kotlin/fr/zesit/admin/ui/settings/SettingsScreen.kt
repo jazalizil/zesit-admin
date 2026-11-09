@@ -83,7 +83,7 @@ internal fun DefaultSettingsScreen(
                     onClick = { showResetDialog = true },
                 )
                 HorizontalDivider()
-                SettingsRow(label = "Version", value = "1.0.0")
+                SettingsRow(label = "Version", value = "${viewModel.env.version} · ${viewModel.env.platform}")
             }
         }
     }

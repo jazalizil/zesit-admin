@@ -89,6 +89,7 @@ internal fun DefaultTrafficScreen(
         !state.configured -> TrafficAuthPanel(
             savedBaseUrl = settings.trafficBaseUrl,
             savedToken = settings.trafficToken,
+            defaultBaseUrl = viewModel.env.trafficBaseUrlDefault,
             error = state.error,
             onConnect = viewModel::connect,
             modifier = modifier,

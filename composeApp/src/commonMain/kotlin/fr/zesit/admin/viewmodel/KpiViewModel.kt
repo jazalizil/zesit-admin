@@ -235,6 +235,9 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
     /** Réglages KPI enregistrés (pré-remplissage du panneau de connexion). */
     val settings get() = container.settingsRepository.appSettings
 
+    /** Environnement d'exécution (plateforme, valeurs par défaut communes). */
+    val env get() = container.env
+
     /**
      * Connexion depuis la page KPI (état non connecté) : enregistre les
      * identifiants puis relance la session (login automatique par KpiSession).

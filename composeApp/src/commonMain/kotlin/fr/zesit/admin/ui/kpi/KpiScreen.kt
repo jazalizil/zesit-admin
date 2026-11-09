@@ -88,6 +88,7 @@ internal fun DefaultKpiScreen(
             savedBaseUrl = settings.kpiBaseUrl,
             savedUser = settings.kpiUser,
             savedPassword = settings.kpiPassword,
+            defaultBaseUrl = viewModel.env.kpiBaseUrlDefault,
             connecting = state.configured && state.error == null,
             error = state.error,
             onConnect = viewModel::connectKpi,

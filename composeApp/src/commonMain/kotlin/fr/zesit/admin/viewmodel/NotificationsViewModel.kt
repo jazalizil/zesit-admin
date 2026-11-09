@@ -37,6 +37,9 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
     /** Préférence d'apparence (écran Réglages) — appliquée à la racine de l'app. */
     val themeMode: StateFlow<ThemeMode> get() = container.themeRepository.themeMode
 
+    /** Environnement d'exécution (plateforme, valeurs par défaut communes). */
+    val env get() = container.env
+
     private var collectorJob: Job? = null
 
     init {

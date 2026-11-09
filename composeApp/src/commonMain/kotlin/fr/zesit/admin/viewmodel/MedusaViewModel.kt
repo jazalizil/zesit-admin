@@ -177,6 +177,9 @@ class MedusaViewModel(
     /** Réglages KPI enregistrés (pré-remplissage du panneau de connexion). */
     val settings get() = container.settingsRepository.appSettings
 
+    /** Environnement d'exécution (plateforme, valeurs par défaut communes). */
+    val env get() = container.env
+
     /**
      * Connexion depuis la page Réel / Prévisionnel (même session KPI que la
      * page KPI) : enregistre les identifiants puis relance la session.

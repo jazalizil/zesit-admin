@@ -60,6 +60,9 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
     /** Réglages enregistrés (pré-remplissage du panneau de connexion). */
     val settings get() = container.settingsRepository.appSettings
 
+    /** Environnement d'exécution (plateforme, valeurs par défaut communes). */
+    val env get() = container.env
+
     /** (baseUrl, token) courants — toute modification relance le chargement. */
     private var currentConfig: Pair<String, String>? = null
 

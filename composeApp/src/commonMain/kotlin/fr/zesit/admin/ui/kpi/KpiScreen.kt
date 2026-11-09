@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.PowerOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -35,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.zesit.admin.kpi.KpiFmt
@@ -88,17 +90,41 @@ internal fun DefaultKpiScreen(
             onConnect = viewModel::connectKpi,
             modifier = modifier,
         )
-        state.inputs == null || state.model == null -> LoadingState(modifier)
+        state.inputs == null || state.model == null ->
+            LoadingState(state.error, viewModel::retryLoad, modifier)
         else -> DashboardContent(state, viewModel, modifier)
     }
 }
 
+/**
+ * Chargement du modèle après connexion : spinner, ou l'erreur du calcul avec
+ * un bouton Réessayer — sans lui, un échec réseau laisserait le spinner
+ * tourner indéfiniment (session connectée mais [KpiUiState.model] jamais livré).
+ */
 @Composable
-private fun LoadingState(modifier: Modifier) {
+private fun LoadingState(error: String?, onRetry: () -> Unit, modifier: Modifier) {
     StatePanel(modifier) {
-        CircularProgressIndicator()
-        Spacer(Modifier.height(16.dp))
-        Text("Chargement du prévisionnel…", style = MaterialTheme.typography.bodyMedium)
+        if (error == null) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
+            Text("Chargement du prévisionnel…", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            Icon(
+                Icons.Default.CloudOff,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                tint = MaterialTheme.colorScheme.error,
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                error,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onRetry) { Text("Réessayer") }
+        }
     }
 }
 

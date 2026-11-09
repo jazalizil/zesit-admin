@@ -255,6 +255,21 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
     /** Reconnexion explicite (après logout ou erreur d'identifiants). */
     fun reconnect() = session.reconnect()
 
+    /**
+     * Réessai depuis l'état de chargement en erreur : si la session est bonne
+     * mais que le calcul du modèle a échoué ( réseau, serveur), relance
+     * directement le recalcul au lieu d'attendre une hypothétique reconnexion.
+     */
+    fun retryLoad() {
+        val state = _uiState.value
+        if (state.connected && state.inputs != null) {
+            _uiState.value = state.copy(error = null)
+            viewModelScope.launch { refresh() }
+        } else {
+            reconnect()
+        }
+    }
+
     fun clearNotice() {
         _uiState.value = _uiState.value.copy(notice = null)
     }

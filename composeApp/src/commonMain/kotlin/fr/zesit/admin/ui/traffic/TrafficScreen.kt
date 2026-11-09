@@ -88,8 +88,8 @@ internal fun DefaultTrafficScreen(
         // Serveur non configuré : panneau de connexion sur la page même.
         !state.configured -> TrafficAuthPanel(
             savedBaseUrl = settings.trafficBaseUrl,
-            savedToken = viewModel.effectiveToken().ifBlank { settings.trafficToken },
             defaultBaseUrl = viewModel.env.trafficBaseUrlDefault,
+            tokenAvailable = viewModel.hasSecretToken(),
             error = state.error,
             onConnect = viewModel::connect,
             modifier = modifier,

@@ -63,11 +63,6 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
     /** Environnement d'exécution (plateforme, valeurs par défaut communes). */
     val env get() = container.env
 
-    /** Token TI effectif : réglage utilisateur sinon secret installé depuis l'env. */
-    fun effectiveToken(): String =
-        container.settingsRepository.appSettings.value.trafficToken.ifBlank {
-            container.secrets.trafficApiToken().orEmpty()
-        }
 
     /** (baseUrl, token) courants — toute modification relance le chargement. */
     private var currentConfig: Pair<String, String>? = null
@@ -93,19 +88,13 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
                     if (!token.isNullOrBlank()) {
                         autoConfigAttempted = true
                         container.settingsRepository.save(
-                            s.copy(
-                                trafficBaseUrl = container.env.trafficBaseUrlDefault,
-                                trafficToken = token,
-                            ),
+                            s.copy(trafficBaseUrl = container.env.trafficBaseUrlDefault),
                         )
                         return@collectLatest
                     }
                 }
-                // Token effectif : réglage utilisateur sinon secret installé
-                // depuis l'env plateforme (les deux vivent en stockage sécurisé).
-                val cfg = s.normalizedTrafficBaseUrl to s.trafficToken.ifBlank {
-                    container.secrets.trafficApiToken().orEmpty()
-                }
+                // Le token vient des secrets (installés depuis l'env plateforme).
+                val cfg = s.normalizedTrafficBaseUrl to container.secrets.trafficApiToken().orEmpty()
                 if (cfg != currentConfig) {
                     currentConfig = cfg
                     if (cfg.first.isBlank()) {
@@ -129,22 +118,22 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
 
     // --- Connexion / déconnexion ---
 
-    /** Connexion depuis la page Traffic (URL + token statique TI_API_TOKEN). */
-    fun connect(baseUrl: String, token: String) {
+    /** Connexion depuis la page Traffic : URL seule — le token vient de l'environnement (secrets). */
+    fun connect(baseUrl: String) {
         val current = container.settingsRepository.appSettings.value
         container.settingsRepository.save(
-            current.copy(
-                trafficBaseUrl = baseUrl.trim().trimEnd('/'),
-                trafficToken = token.trim(),
-            ),
+            current.copy(trafficBaseUrl = baseUrl.trim().trimEnd('/')),
         )
     }
+
+    /** true si le token TI est disponible (installé depuis l'environnement). */
+    fun hasSecretToken(): Boolean = !container.secrets.trafficApiToken().isNullOrBlank()
 
     /** Déconnexion (bouton power) : efface les réglages traffic-inspector. */
     fun disconnect() {
         val current = container.settingsRepository.appSettings.value
         container.settingsRepository.save(
-            current.copy(trafficBaseUrl = "", trafficToken = ""),
+            current.copy(trafficBaseUrl = ""),
         )
     }
 

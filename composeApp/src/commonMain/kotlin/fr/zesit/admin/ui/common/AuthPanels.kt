@@ -47,7 +47,10 @@ fun KpiAuthPanel(
     onConnect: (baseUrl: String, user: String, password: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var baseUrl by remember(savedBaseUrl) { mutableStateOf(savedBaseUrl) }
+    // URL pré-remplie par défaut (valeur éditable) si rien n'est enregistré.
+    var baseUrl by remember(savedBaseUrl, defaultBaseUrl) {
+        mutableStateOf(savedBaseUrl.ifBlank { defaultBaseUrl })
+    }
     var user by remember(savedUser) { mutableStateOf(savedUser) }
     var password by remember(savedPassword) { mutableStateOf(savedPassword) }
 
@@ -121,7 +124,10 @@ fun NtfyAuthPanel(
     onConnect: (baseUrl: String, topic: String, token: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var baseUrl by remember(savedBaseUrl) { mutableStateOf(savedBaseUrl) }
+    // URL pré-remplie par défaut (valeur éditable) si rien n'est enregistré.
+    var baseUrl by remember(savedBaseUrl, defaultBaseUrl) {
+        mutableStateOf(savedBaseUrl.ifBlank { defaultBaseUrl })
+    }
     var topic by remember(savedTopic) { mutableStateOf(savedTopic) }
     var token by remember(savedToken) { mutableStateOf(savedToken) }
 
@@ -213,21 +219,23 @@ private fun ConnectButton(connecting: Boolean, enabled: Boolean, onClick: () -> 
 @Composable
 fun TrafficAuthPanel(
     savedBaseUrl: String,
-    savedToken: String,
     defaultBaseUrl: String,
+    tokenAvailable: Boolean,
     error: String?,
-    onConnect: (baseUrl: String, token: String) -> Unit,
+    onConnect: (baseUrl: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var baseUrl by remember(savedBaseUrl) { mutableStateOf(savedBaseUrl) }
-    var token by remember(savedToken) { mutableStateOf(savedToken) }
+    // URL pré-remplie par défaut (valeur éditable) si rien n'est enregistré.
+    var baseUrl by remember(savedBaseUrl, defaultBaseUrl) {
+        mutableStateOf(savedBaseUrl.ifBlank { defaultBaseUrl })
+    }
 
     StatePanel(modifier) {
         Text("Connexion à traffic-inspector", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Renseignez l'URL du serveur (/ti-api, VPN-only via WireGuard) et le " +
-                "token statique TI_API_TOKEN défini sur le VPS.",
+            "Renseignez l'URL du serveur /ti-api (VPN-only via WireGuard). Le token " +
+                "TI ne se saisit pas : il est lu depuis l'environnement de la plateforme.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -242,21 +250,19 @@ fun TrafficAuthPanel(
             modifier = Modifier.fillMaxWidth(),
             colors = fieldColors(),
         )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = token,
-            onValueChange = { token = it },
-            label = { Text("Token TI (Bearer …)") },
-            placeholder = { Text("Token TI_API_TOKEN du VPS") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors(),
-        )
+        if (!tokenAvailable) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Token TI introuvable dans l'environnement (TI_API_TOKEN) — " +
+                    "définissez-le puis relancez l'app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
         Spacer(Modifier.height(16.dp))
-        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank() && token.isNotBlank()) {
-            onConnect(baseUrl, token)
+        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank()) {
+            onConnect(baseUrl)
         }
         error?.let {
             Spacer(Modifier.height(12.dp))

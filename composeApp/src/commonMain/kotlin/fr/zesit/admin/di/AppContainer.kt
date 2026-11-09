@@ -43,9 +43,10 @@ class AppContainer {
     val secrets = SecretsStore(secureSettings)
 
     // Environnement d'exécution : commun + spécialités de la plateforme. Le
-    // token TI fourni par l'env y est installé dans les secrets s'il n'y est pas.
+    // token TI de l'env est (ré)installé dans les secrets dès qu'il diffère —
+    // l'environnement prime sur un secret périmé (rotation de TI_API_TOKEN).
     val env: AppEnv = platformEnv().also { env ->
-        if (!env.trafficToken.isNullOrBlank() && secrets.trafficApiToken() == null) {
+        if (!env.trafficToken.isNullOrBlank() && secrets.trafficApiToken() != env.trafficToken) {
             secrets.saveTrafficApiToken(env.trafficToken)
         }
     }

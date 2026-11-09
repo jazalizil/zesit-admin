@@ -234,8 +234,7 @@ fun TrafficAuthPanel(
         Text("Connexion à traffic-inspector", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Renseignez l'URL du serveur /ti-api (VPN-only via WireGuard). Le token " +
-                "TI ne se saisit pas : il est lu depuis l'environnement de la plateforme.",
+            "Renseignez l'URL du serveur /ti-api (VPN-only via WireGuard).",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -261,7 +260,9 @@ fun TrafficAuthPanel(
             )
         }
         Spacer(Modifier.height(16.dp))
-        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank()) {
+        // Sans token TI dans l'environnement, connecter est inutile (401) :
+        // le bouton attend que la variable TI_API_TOKEN soit fournie.
+        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank() && tokenAvailable) {
             onConnect(baseUrl)
         }
         error?.let {

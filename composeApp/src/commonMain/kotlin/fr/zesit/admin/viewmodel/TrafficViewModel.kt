@@ -290,7 +290,14 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun friendly(e: Exception): String = when (e) {
         is TrafficApiDisabledException -> e.message ?: "API /ti-api désactivée côté serveur."
-        is TrafficAuthException -> e.message ?: "Token traffic-inspector invalide (401)."
+        is TrafficAuthException ->
+            if (container.secrets.trafficApiToken() == null) {
+                "Aucun token TI dans l'environnement : lancez l'app avec la variable " +
+                    "TI_API_TOKEN définie (export TI_API_TOKEN=… puis relancez), valeur du " +
+                    "TI_API_TOKEN du .env du VPS."
+            } else {
+                e.message ?: "Token traffic-inspector refusé (401) — TI_API_TOKEN ne correspond pas à celui du serveur."
+            }
         is TrafficApiException -> e.message ?: "Erreur de l'API traffic-inspector."
         else -> e.message ?: "Connexion à traffic-inspector impossible."
     }

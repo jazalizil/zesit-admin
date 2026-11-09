@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import fr.zesit.admin.viewmodel.KpiUiState
 import fr.zesit.admin.ui.theme.fieldColors
+import fr.zesit.admin.ui.common.OutlinedButtonVariant
+import fr.zesit.admin.ui.common.VariantOutlinedButton
 
 /**
  * Barre de gestion des modèles enregistrés (web : composant ModelsBar) :
@@ -100,7 +102,7 @@ internal fun DefaultModelsBar(
             enabled = state.selectedModelId != null && !state.modelBusy,
         ) { Text("Charger") }
 
-        OutlinedButton(
+        VariantOutlinedButton(
             onClick = {
                 if (selected != null) {
                     onSave(selected.name, selected.description)
@@ -111,11 +113,13 @@ internal fun DefaultModelsBar(
                 }
             },
             enabled = !state.modelBusy,
+            variant = OutlinedButtonVariant.ACCENT,
         ) { Text(if (selected != null) "Réenregistrer" else "Enregistrer") }
 
-        OutlinedButton(
+        VariantOutlinedButton(
             onClick = { deleteDialog = true },
             enabled = state.selectedModelId != null && !state.modelBusy,
+            variant = OutlinedButtonVariant.DANGER,
         ) { Text("Supprimer") }
 
         if (state.modelsLoading) {

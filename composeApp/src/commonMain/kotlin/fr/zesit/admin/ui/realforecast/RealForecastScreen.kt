@@ -60,6 +60,8 @@ import fr.zesit.admin.viewmodel.MedusaUiState
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import kotlin.math.abs
 import fr.zesit.admin.ui.theme.fieldColors
+import fr.zesit.admin.ui.common.OutlinedButtonVariant
+import fr.zesit.admin.ui.common.VariantOutlinedButton
 
 /**
  * Section « Réel / Prévisionnel » — portage Compose de RealVsForecast.tsx
@@ -189,7 +191,11 @@ private fun PeriodBar(
                 ISODateField(value = state.from) { from -> viewModel.setPeriod(from, state.to) }
                 Text("→", style = MaterialTheme.typography.bodyMedium)
                 ISODateField(value = state.to) { to -> viewModel.setPeriod(state.from, to) }
-                OutlinedButton(onClick = viewModel::syncNow, enabled = !state.syncing) {
+                VariantOutlinedButton(
+                    onClick = viewModel::syncNow,
+                    enabled = !state.syncing,
+                    variant = OutlinedButtonVariant.ACCENT,
+                ) {
                     if (state.syncing) {
                         CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(6.dp))
@@ -201,7 +207,7 @@ private fun PeriodBar(
                 OutlinedButton(onClick = onToggleMapping) {
                     Text(if (showMapping) "Masquer le mapping" else "Mapping variantes / canaux")
                 }
-                OutlinedButton(onClick = viewModel::disconnect) {
+                VariantOutlinedButton(onClick = viewModel::disconnect, variant = OutlinedButtonVariant.ACCENT) {
                     Icon(
                         Icons.Default.PowerOff,
                         contentDescription = null,

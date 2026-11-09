@@ -48,6 +48,8 @@ import fr.zesit.admin.viewmodel.KpiUiState
 import fr.zesit.admin.viewmodel.KpiViewModel
 import kotlin.math.abs
 import fr.zesit.admin.ui.theme.filledButtonColors
+import fr.zesit.admin.ui.common.OutlinedButtonVariant
+import fr.zesit.admin.ui.common.VariantOutlinedButton
 
 private val TABS = listOf("📊 Année 1", "🌡️ Sensibilité", "🧾 Détail mensuel")
 
@@ -209,8 +211,12 @@ private fun Header(state: KpiUiState, viewModel: KpiViewModel) {
         )
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = viewModel::reset, enabled = !state.modelBusy) { Text("Réinitialiser") }
-            OutlinedButton(onClick = viewModel::logout) {
+            VariantOutlinedButton(
+                onClick = viewModel::reset,
+                enabled = !state.modelBusy,
+                variant = OutlinedButtonVariant.DANGER,
+            ) { Text("Réinitialiser") }
+            VariantOutlinedButton(onClick = viewModel::logout, variant = OutlinedButtonVariant.ACCENT) {
                 Icon(
                     Icons.Default.PowerOff,
                     contentDescription = null,

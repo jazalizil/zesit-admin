@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +61,8 @@ actual fun App(container: AppContainer) {
         // Navigation du dashboard : KPI (accueil), Réel/Prévisionnel, Notifications
         var section by remember { mutableStateOf(DashboardSection.Kpi) }
         var showSettings by remember { mutableStateOf(false) }
+        // Menu latéral plié/déplié (rail d'icônes ↔ panneau complet)
+        var menuExpanded by remember { mutableStateOf(true) }
         val selectSection: (DashboardSection) -> Unit = {
             section = it
             showSettings = false
@@ -75,10 +76,11 @@ actual fun App(container: AppContainer) {
             SideMenu(
                 selected = section,
                 settingsOpen = showSettings,
+                expanded = menuExpanded,
+                onToggleExpanded = { menuExpanded = !menuExpanded },
                 onSelectSection = selectSection,
                 onToggleSettings = { showSettings = !showSettings },
                 modifier = Modifier
-                    .width(268.dp)
                     .padding(14.dp),
             )
 

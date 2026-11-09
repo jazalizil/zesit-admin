@@ -18,6 +18,9 @@ package fr.zesit.admin.di
  *   panneau de connexion)
  * @param ntfyBaseUrlDefault URL par défaut du serveur ntfy
  * @param trafficBaseUrlDefault URL par défaut de traffic-inspector (/ti-api)
+ * @param trafficToken token TI (TI_API_TOKEN du VPS) fourni par la plateforme
+ *   (variable d'env TI_API_TOKEN sur desktop/iOS, propriété Gradle TI_API_TOKEN
+ *   sur Android) — installé dans les secrets de l'app par AppContainer si absent
  * @param apnsLabel environnement APNs sur iOS ("sandbox"/"production"), null ailleurs
  * @param deviceInfo fiche technique de l'appareil/hôte (OS, modèle, runtime)
  */
@@ -29,6 +32,7 @@ data class AppEnv(
     val kpiBaseUrlDefault: String = "https://kpi.zesit.fr",
     val ntfyBaseUrlDefault: String = "https://ntfy.zesit.fr",
     val trafficBaseUrlDefault: String = "https://traffic.zesit.fr",
+    val trafficToken: String? = null,
     val apnsLabel: String? = null,
     val deviceInfo: String? = null,
 )

@@ -99,6 +99,16 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
+
+        // Token TI (AppEnv.trafficToken / SecretsStore) — fourni par la propriété
+        // Gradle TI_API_TOKEN (gradle.properties, non commitée) ou la variable d'environnement.
+        buildConfigField(
+            "String",
+            "TI_API_TOKEN",
+            "\"" + (providers.gradleProperty("TI_API_TOKEN")
+                .orElse(providers.environmentVariable("TI_API_TOKEN"))
+                .getOrElse("")) + "\"",
+        )
     }
     packaging {
         resources {

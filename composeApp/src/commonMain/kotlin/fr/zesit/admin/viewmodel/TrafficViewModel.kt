@@ -63,8 +63,17 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
     /** Environnement d'exécution (plateforme, valeurs par défaut communes). */
     val env get() = container.env
 
+    /** Token TI effectif : réglage utilisateur sinon secret installé depuis l'env. */
+    fun effectiveToken(): String =
+        container.settingsRepository.appSettings.value.trafficToken.ifBlank {
+            container.secrets.trafficApiToken().orEmpty()
+        }
+
     /** (baseUrl, token) courants — toute modification relance le chargement. */
     private var currentConfig: Pair<String, String>? = null
+
+    /** L'auto-configuration ne s'applique qu'une fois par session : une Déconnexion explicite reste effective jusqu'au prochain lancement. */
+    private var autoConfigAttempted = false
 
     /** Pipeline des filtres du journal (recherche débouncée). */
     private val journalFilters = MutableStateFlow(Triple("", null as String?, false))
@@ -75,7 +84,28 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
     init {
         viewModelScope.launch {
             container.settingsRepository.appSettings.collectLatest { s ->
-                val cfg = s.normalizedTrafficBaseUrl to s.trafficToken
+                // Auto-configuration (une fois par session) : si rien n'est saisi
+                // mais que l'app dispose du token TI (env plateforme installé
+                // dans les secrets), on branche l'URL par défaut de l'env — la
+                // page se connecte seule.
+                if (!autoConfigAttempted && !s.isTrafficConfigured) {
+                    val token = container.secrets.trafficApiToken()
+                    if (!token.isNullOrBlank()) {
+                        autoConfigAttempted = true
+                        container.settingsRepository.save(
+                            s.copy(
+                                trafficBaseUrl = container.env.trafficBaseUrlDefault,
+                                trafficToken = token,
+                            ),
+                        )
+                        return@collectLatest
+                    }
+                }
+                // Token effectif : réglage utilisateur sinon secret installé
+                // depuis l'env plateforme (les deux vivent en stockage sécurisé).
+                val cfg = s.normalizedTrafficBaseUrl to s.trafficToken.ifBlank {
+                    container.secrets.trafficApiToken().orEmpty()
+                }
                 if (cfg != currentConfig) {
                     currentConfig = cfg
                     if (cfg.first.isBlank()) {

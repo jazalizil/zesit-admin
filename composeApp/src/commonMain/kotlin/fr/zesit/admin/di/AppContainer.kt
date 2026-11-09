@@ -39,8 +39,16 @@ class AppContainer {
     // Dashboard d'analyse du trafic (traffic-inspector /ti-api — VPN-only).
     val trafficApi: TrafficApi = createTrafficApi()
 
-    // Environnement d'exécution : commun + spécialités de la plateforme.
-    val env: AppEnv = platformEnv()
+    // Secrets de l'app : token TI installé depuis l'env plateforme, sur stockage sécurisé.
+    val secrets = SecretsStore(secureSettings)
+
+    // Environnement d'exécution : commun + spécialités de la plateforme. Le
+    // token TI fourni par l'env y est installé dans les secrets s'il n'y est pas.
+    val env: AppEnv = platformEnv().also { env ->
+        if (!env.trafficToken.isNullOrBlank() && secrets.trafficApiToken() == null) {
+            secrets.saveTrafficApiToken(env.trafficToken)
+        }
+    }
 
     // API du dashboard KPI (prévisionnel citronnade) + persistance session/hypothèses.
     // Le JWT KPI est un credential → stockage sécurisé ; les hypothèses sans

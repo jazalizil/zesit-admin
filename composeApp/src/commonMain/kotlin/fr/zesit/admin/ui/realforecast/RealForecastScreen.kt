@@ -47,6 +47,7 @@ import fr.zesit.admin.kpi.MedusaChannel
 import fr.zesit.admin.kpi.MedusaComparison
 import fr.zesit.admin.kpi.MedusaStatus
 import fr.zesit.admin.kpi.MedusaVariant
+import fr.zesit.admin.ui.common.StatePanel
 import fr.zesit.admin.ui.kpi.Chart
 import fr.zesit.admin.ui.kpi.ChartAreaAmber
 import fr.zesit.admin.ui.kpi.ChartCard
@@ -96,11 +97,7 @@ internal fun DefaultRealForecastScreen(
 
 @Composable
 private fun UnconfiguredState(modifier: Modifier, onOpenSettings: () -> Unit) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    StatePanel(modifier) {
         Icon(
             Icons.Default.Settings,
             contentDescription = null,
@@ -129,11 +126,7 @@ private fun DisconnectedState(
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    StatePanel(modifier) {
         if (state.error == null) {
             CircularProgressIndicator()
             Spacer(Modifier.height(16.dp))

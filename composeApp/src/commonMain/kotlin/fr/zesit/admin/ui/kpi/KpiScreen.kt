@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import fr.zesit.admin.kpi.KpiFmt
 import fr.zesit.admin.kpi.KpiInputs
 import fr.zesit.admin.kpi.KpiResponse
+import fr.zesit.admin.ui.common.StatePanel
 import fr.zesit.admin.viewmodel.KpiUiState
 import fr.zesit.admin.viewmodel.KpiViewModel
 import kotlin.math.abs
@@ -81,11 +82,7 @@ internal fun DefaultKpiScreen(
 
 @Composable
 private fun UnconfiguredState(modifier: Modifier, onOpenSettings: () -> Unit) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    StatePanel(modifier) {
         Icon(
             Icons.Default.Settings,
             contentDescription = null,
@@ -114,11 +111,7 @@ private fun LoadingState(
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    StatePanel(modifier) {
         if (state.error == null) {
             CircularProgressIndicator()
             Spacer(Modifier.height(16.dp))

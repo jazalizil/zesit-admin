@@ -13,75 +13,21 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Palette ZESIT — source unique : apps/storefront/src/styles/globals.css (:root)
-// + grey scale de apps/storefront/tailwind.config.js
-private val LemonLight = Color(0xFFFFF3B0) // --color-lemon-light
-private val Lemon = Color(0xFFFFD400)      // --color-lemon
-private val LemonDark = Color(0xFFE6BE00)  // --color-lemon-dark
-private val Ink = Color(0xFF1B1810)        // --color-ink
-private val Cream = Color(0xFFFFFCF2)      // --color-cream
-private val Leaf = Color(0xFF8DC63F)       // --color-leaf
-private val Grey10 = Color(0xFFF3F4F6)
-private val Grey20 = Color(0xFFE5E7EB)
-private val Grey30 = Color(0xFFD1D5DB)
-private val Grey60 = Color(0xFF4B5563)
-private val Grey70 = Color(0xFF374151)
-private val Grey80 = Color(0xFF1F2937)
+// Palette Zesit Admin (4 couleurs de marque) :
+//  - Primaire   : 230,207,148 (#E6CF94) — or
+//  - Secondaire : 151,126,109 (#977E6D) — bronze
+//  - Claire     : 252,247,227 (#FCF7E3) — crème
+//  - Foncée     :  87, 72, 59 (#57483B) — brun
+// Le fond de l'app reprend la couleur primaire en thème clair et la
+// couleur secondaire en thème sombre ; la couleur claire sert de surface
+// (cartes, panneau du menu) et de texte en thème sombre, la couleur foncée
+// sert de texte en thème clair et de surface en thème sombre.
+private val Primary = Color(0xFFE6CF94)   // 230,207,148
+private val Secondary = Color(0xFF977E6D) // 151,126,109
+private val Light = Color(0xFFFCF7E3)     // 252,247,227
+private val Dark = Color(0xFF57483B)      // 87,72,59
 
-// Thème clair = storefront (fond cream, texte ink, interactif lemon/ink :
-// --bg-interactive: lemon, --fg-interactive: ink, hover lemon-dark)
-private val ZesitLightColors = lightColorScheme(
-    primary = Lemon,
-    onPrimary = Ink,
-    primaryContainer = LemonLight,
-    onPrimaryContainer = Ink,
-    secondary = Leaf,
-    onSecondary = Ink,
-    secondaryContainer = LemonLight,
-    onSecondaryContainer = Ink,
-    tertiary = LemonDark,
-    onTertiary = Ink,
-    background = Cream,
-    onBackground = Ink,
-    surface = Cream,
-    onSurface = Ink,
-    surfaceVariant = Grey10,
-    onSurfaceVariant = Grey60,
-    outline = Grey30,
-    outlineVariant = Grey20,
-    error = Color(0xFFB00020),
-    onError = Color(0xFFFFFFFF),
-    inverseSurface = Ink,
-    inverseOnSurface = Cream,
-    inversePrimary = LemonDark,
-    surfaceTint = Lemon,
-    scrim = Ink,
-)
-
-// Variante sombre dérivée de la même palette (le storefront n'a pas de thème .dark custom)
-private val ZesitDarkColors = darkColorScheme(
-    primary = Lemon,
-    onPrimary = Ink,
-    primaryContainer = LemonDark,
-    onPrimaryContainer = Ink,
-    secondary = Leaf,
-    onSecondary = Ink,
-    background = Ink,
-    onBackground = Cream,
-    surface = Grey80,
-    onSurface = Cream,
-    surfaceVariant = Grey70,
-    onSurfaceVariant = Grey30,
-    outline = Grey60,
-    outlineVariant = Grey70,
-    inverseSurface = Cream,
-    inverseOnSurface = Ink,
-    inversePrimary = Lemon,
-    surfaceTint = Lemon,
-    scrim = Ink,
-)
-
-// Border radius du storefront (tailwind borderRadius) : soft 2px, base 4px, rounded 8px, large 16px
+// Border radius (storefront tailwind) : soft 2px, base 4px, rounded 8px, large 16px
 private val ZesitShapes = Shapes(
     extraSmall = RoundedCornerShape(2.dp),
     small = RoundedCornerShape(4.dp),
@@ -90,16 +36,92 @@ private val ZesitShapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp),
 )
 
+// Thème clair : fond = primaire (or), cartes crème, texte brun foncé
+private val ZesitLightColors = lightColorScheme(
+    primary = Primary,
+    onPrimary = Dark,
+    primaryContainer = Light,
+    onPrimaryContainer = Dark,
+    secondary = Secondary,
+    onSecondary = Light,
+    secondaryContainer = Color(0xFFEFE7D2),
+    onSecondaryContainer = Dark,
+    tertiary = Secondary,
+    onTertiary = Light,
+    background = Primary,
+    onBackground = Dark,
+    surface = Light,
+    onSurface = Dark,
+    surfaceVariant = Color(0xFFF6EFD9),
+    onSurfaceVariant = Color(0xFF82705F),
+    surfaceContainerLowest = Color(0xFFFFFDF1),
+    surfaceContainerLow = Color(0xFFFDF8E7),
+    surfaceContainer = Light,
+    surfaceContainerHigh = Color(0xFFF5EEDA),
+    surfaceContainerHighest = Color(0xFFEFE6C8),
+    surfaceDim = Color(0xFFDFCCA0),
+    surfaceBright = Color(0xFFFFF8DB),
+    outline = Color(0xFFB8A175),
+    outlineVariant = Color(0xFFE3D7B4),
+    error = Color(0xFF9E2B26),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFFF9DED8),
+    onErrorContainer = Color(0xFF4B0F0C),
+    inverseSurface = Dark,
+    inverseOnSurface = Light,
+    inversePrimary = Primary,
+    surfaceTint = Primary,
+    scrim = Dark,
+)
+
+// Thème sombre : fond = secondaire (bronze), cartes brun foncé, texte crème
+private val ZesitDarkColors = darkColorScheme(
+    primary = Primary,
+    onPrimary = Dark,
+    primaryContainer = Dark,
+    onPrimaryContainer = Light,
+    secondary = Secondary,
+    onSecondary = Dark,
+    secondaryContainer = Color(0xFF4C3F34),
+    onSecondaryContainer = Light,
+    tertiary = Secondary,
+    onTertiary = Dark,
+    background = Secondary,
+    onBackground = Light,
+    surface = Dark,
+    onSurface = Light,
+    surfaceVariant = Color(0xFF605041),
+    onSurfaceVariant = Color(0xFFE2D8C5),
+    surfaceContainerLowest = Color(0xFF46382F),
+    surfaceContainerLow = Color(0xFF4C3F34),
+    surfaceContainer = Dark,
+    surfaceContainerHigh = Color(0xFF5F5142),
+    surfaceContainerHighest = Color(0xFF685949),
+    surfaceDim = Color(0xFF39362E),
+    surfaceBright = Color(0xFF8B7666),
+    outline = Color(0xFFB29781),
+    outlineVariant = Color(0xFF6B5B4A),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF5C1613),
+    errorContainer = Color(0xFF5C1613),
+    onErrorContainer = Color(0xFFFFB4AB),
+    inverseSurface = Light,
+    inverseOnSurface = Dark,
+    inversePrimary = Primary,
+    surfaceTint = Primary,
+    scrim = Color(0xFF2C241C),
+)
+
 @Composable
 fun ZesitAdminTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    // ::selection du storefront : fond lemon, texte ink
+    // Sélection de texte : fond or (primaire), poignée brun foncé
     CompositionLocalProvider(
         LocalTextSelectionColors provides TextSelectionColors(
-            handleColor = Ink,
-            backgroundColor = Lemon,
+            handleColor = Dark,
+            backgroundColor = Primary,
         )
     ) {
         MaterialTheme(

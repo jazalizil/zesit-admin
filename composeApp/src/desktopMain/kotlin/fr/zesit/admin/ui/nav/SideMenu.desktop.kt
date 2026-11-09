@@ -115,10 +115,17 @@ internal fun SideMenu(
 
         Spacer(Modifier.height(4.dp))
 
-        // En-tête : logo + nom de l'app (le nom fonde quand le menu se plie)
+        // En-tête : logo + nom de l'app (le nom fonde quand le menu se plie).
+        // Textes sur une seule ligne : à largeur réduite, le wrap changerait la
+        // hauteur de la rangée et décalerait verticalement tous les items en
+        // dessous. Plié, le logo glisse au centre horizontal du rail
+        // (translation animée en même temps que le fondu des libellés).
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Décalage du logo vers le centre du rail plié (0 déplié).
+            val logoSlide = 1f - labelAlpha
             Box(
                 modifier = Modifier
+                    .graphicsLayer { translationX = 9.dp.toPx() * logoSlide }
                     .size(42.dp)
                     .background(scheme.primary, RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center,
@@ -136,11 +143,13 @@ internal fun SideMenu(
                     "Zesit Admin",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
                 )
                 Text(
                     "Tableau de bord",
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant,
+                    maxLines = 1,
                 )
             }
         }
@@ -247,12 +256,14 @@ private fun SideMenuItem(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = if (selected) selectedContent else scheme.onSurface,
+                maxLines = 1,
             )
             Text(
                 caption,
                 style = MaterialTheme.typography.labelSmall,
                 color = if (selected) selectedContent.copy(alpha = 0.75f)
                 else scheme.onSurfaceVariant,
+                maxLines = 1,
             )
         }
     }

@@ -91,6 +91,9 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
 
     private var lastComputed: KpiInputs? = null
 
+    /** true tant que le premier chargement du modèle n'est pas reparti sans délai. */
+    private var firstLoad = true
+
     init {
         viewModelScope.launch {
             session.state.collectLatest { st -> onSessionState(st) }
@@ -98,7 +101,13 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             inputsFlow.collectLatest { inputs ->
                 if (inputs != null) {
-                    delay(REFRESH_DEBOUNCE_MS)
+                    // Premier chargement après (re)connexion : pas de délai —
+                    // le debounce ne sert qu'à regrouper les ajustements d'hypothèses.
+                    if (firstLoad) {
+                        firstLoad = false
+                    } else {
+                        delay(REFRESH_DEBOUNCE_MS)
+                    }
                     refresh()
                 }
             }
@@ -118,6 +127,7 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
         )
         // (Re)connexion : hydrate les hypothèses puis charge la liste des modèles.
         if (st.connected && !previousConnected) {
+            firstLoad = true
             viewModelScope.launch { hydrate() }
         }
     }

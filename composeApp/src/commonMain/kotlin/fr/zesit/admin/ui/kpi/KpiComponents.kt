@@ -34,6 +34,8 @@ import fr.zesit.admin.kpi.KpiFormatComputed
 import fr.zesit.admin.viewmodel.KpiFormatKey
 import fr.zesit.admin.viewmodel.KpiInputKey
 import kotlin.math.roundToInt
+import fr.zesit.admin.ui.theme.fieldColors
+import fr.zesit.admin.ui.theme.sliderColors
 
 // Composants du dashboard — portage des KpiCard / SliderRow / NumRow / FormatCard
 // du web (zesit-kpi/apps/web/src/pages/DashboardPage.tsx).
@@ -121,6 +123,7 @@ internal fun DefaultSliderRow(
             onValueChange = { onValueChange(it.toDouble()) },
             valueRange = min.toFloat()..max.toFloat(),
             steps = steps,
+            colors = sliderColors(),
         )
     }
 }
@@ -152,6 +155,7 @@ internal fun DefaultNumRow(
             textStyle = MaterialTheme.typography.bodySmall.copy(textAlign = TextAlign.End),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.width(120.dp),
+            colors = fieldColors(),
         )
     }
 }

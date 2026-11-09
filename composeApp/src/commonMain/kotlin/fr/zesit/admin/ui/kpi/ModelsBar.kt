@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import fr.zesit.admin.viewmodel.KpiUiState
+import fr.zesit.admin.ui.theme.fieldColors
 
 /**
  * Barre de gestion des modèles enregistrés (web : composant ModelsBar) :
@@ -133,11 +134,13 @@ internal fun DefaultModelsBar(
                         onValueChange = { name = it },
                         label = { Text("Nom") },
                         singleLine = true,
+                        colors = fieldColors(),
                     )
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
                         label = { Text("Description (optionnel)") },
+                        colors = fieldColors(),
                     )
                 }
             },

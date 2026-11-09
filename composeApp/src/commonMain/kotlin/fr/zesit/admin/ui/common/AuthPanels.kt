@@ -26,6 +26,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import fr.zesit.admin.ui.theme.fieldColors
+import fr.zesit.admin.ui.theme.filledButtonColors
 
 /**
  * Panneau d'authentification du serveur KPI, affiché par les pages KPI et
@@ -66,6 +68,7 @@ fun KpiAuthPanel(
             placeholder = { Text("https://kpi.zesit.fr") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -74,6 +77,7 @@ fun KpiAuthPanel(
             label = { Text("Utilisateur") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -84,6 +88,7 @@ fun KpiAuthPanel(
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
         )
         Spacer(Modifier.height(16.dp))
         ConnectButton(connecting, enabled = baseUrl.isNotBlank() && user.isNotBlank() && password.isNotBlank()) {
@@ -136,6 +141,7 @@ fun NtfyAuthPanel(
             placeholder = { Text("https://ntfy.zesit.fr") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -145,6 +151,7 @@ fun NtfyAuthPanel(
             placeholder = { Text("zesit-…") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
@@ -156,6 +163,7 @@ fun NtfyAuthPanel(
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors(),
         )
         Spacer(Modifier.height(16.dp))
         ConnectButton(connecting = false, enabled = baseUrl.isNotBlank() && topic.isNotBlank()) {
@@ -183,7 +191,7 @@ private fun ConnectButton(connecting: Boolean, enabled: Boolean, onClick: () -> 
             Text("Connexion…", style = MaterialTheme.typography.bodyMedium)
         }
     } else {
-        Button(onClick = onClick, enabled = enabled) {
+        Button(onClick = onClick, enabled = enabled, colors = filledButtonColors()) {
             Icon(
                 Icons.AutoMirrored.Filled.Login,
                 contentDescription = null,

@@ -47,6 +47,7 @@ import fr.zesit.admin.ui.common.StatePanel
 import fr.zesit.admin.viewmodel.KpiUiState
 import fr.zesit.admin.viewmodel.KpiViewModel
 import kotlin.math.abs
+import fr.zesit.admin.ui.theme.filledButtonColors
 
 private val TABS = listOf("📊 Année 1", "🌡️ Sensibilité", "🧾 Détail mensuel")
 
@@ -123,7 +124,7 @@ private fun LoadingState(error: String?, onRetry: () -> Unit, modifier: Modifier
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(16.dp))
-            Button(onClick = onRetry) { Text("Réessayer") }
+            Button(onClick = onRetry, colors = filledButtonColors()) { Text("Réessayer") }
         }
     }
 }

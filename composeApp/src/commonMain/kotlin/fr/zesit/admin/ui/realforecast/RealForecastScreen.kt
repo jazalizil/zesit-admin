@@ -59,6 +59,7 @@ import fr.zesit.admin.ui.kpi.fmtInt
 import fr.zesit.admin.viewmodel.MedusaUiState
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import kotlin.math.abs
+import fr.zesit.admin.ui.theme.fieldColors
 
 /**
  * Section « Réel / Prévisionnel » — portage Compose de RealVsForecast.tsx
@@ -238,6 +239,7 @@ private fun ISODateField(value: String, onValid: (String) -> Unit) {
         singleLine = true,
         textStyle = MaterialTheme.typography.bodySmall,
         modifier = Modifier.width(130.dp),
+        colors = fieldColors(),
     )
 }
 

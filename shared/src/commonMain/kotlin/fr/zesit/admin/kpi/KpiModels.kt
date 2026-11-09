@@ -109,7 +109,9 @@ data class KpiResponse(
     val pateKgMois: Double,
     val pateKgAn1: Double,
     val pateKgAn2: Double,
-    val pateCoutMois: Double,
+    // L'API ne renvoie plus ce champ : optionnel pour ne pas casser le décodage
+    // (MissingFieldException) sur les réponses récentes.
+    val pateCoutMois: Double? = null,
     val laboAn: Double,
     val chargesMois: Double,
     val seuilL: Double? = null,

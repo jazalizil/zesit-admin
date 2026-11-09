@@ -281,7 +281,7 @@ private fun KpiCardsGrid(model: KpiResponse, inputs: KpiInputs) {
         KpiCardData(
             "Pâte de citron nécessaire", "${fmtInt(model.pateKgMois)} kg/mois",
             "Année 1 : ${fmtInt(model.pateKgAn1)} kg · année 2 : ${fmtInt(model.pateKgAn2)} kg" +
-                " · coût rendu ${eur(model.pateCoutMois)}/mois",
+                (model.pateCoutMois?.let { " · coût rendu ${eur(it)}/mois" } ?: ""),
             KpiTone.NEUTRAL,
         ),
         KpiCardData(

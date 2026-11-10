@@ -30,27 +30,38 @@ import fr.zesit.admin.ui.theme.fieldColors
 import fr.zesit.admin.ui.theme.filledButtonColors
 
 /**
+ * Ligne d'information non éditable : l'URL du serveur utilisée par le panneau,
+ * fournie par l'environnement (env.json / variables, cf. AppEnv) — plus aucun
+ * champ URL n'est saisi dans les formulaires de connexion.
+ */
+@Composable
+private fun EnvBaseUrlLine(label: String, baseUrl: String) {
+    if (baseUrl.isBlank()) return
+    Text(
+        "$label (environnement) : $baseUrl",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+}
+
+/**
  * Panneau d'authentification du serveur KPI, affiché par les pages KPI et
  * Réel / Prévisionnel (une seule et même session) quand l'utilisateur n'est
- * pas connecté : URL du serveur + identifiants, bouton « Se connecter ».
- * Une session existante (settings) pré-remplit les champs ; `connecting`
- * affiche le temps du login une progression à la place du bouton.
+ * pas connecté : identifiants seulement — l'URL du serveur vient de
+ * l'environnement ([EnvBaseUrlLine]). `connecting` affiche le temps du login
+ * une progression à la place du bouton.
  */
 @Composable
 fun KpiAuthPanel(
-    savedBaseUrl: String,
     savedUser: String,
     savedPassword: String,
-    defaultBaseUrl: String,
+    baseUrl: String,
     connecting: Boolean,
     error: String?,
-    onConnect: (baseUrl: String, user: String, password: String) -> Unit,
+    onConnect: (user: String, password: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // URL pré-remplie par défaut (valeur éditable) si rien n'est enregistré.
-    var baseUrl by remember(savedBaseUrl, defaultBaseUrl) {
-        mutableStateOf(savedBaseUrl.ifBlank { defaultBaseUrl })
-    }
     var user by remember(savedUser) { mutableStateOf(savedUser) }
     var password by remember(savedPassword) { mutableStateOf(savedPassword) }
 
@@ -58,23 +69,14 @@ fun KpiAuthPanel(
         Text("Connexion au serveur KPI", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Renseignez l'URL du serveur et vos identifiants pour charger le " +
-                "prévisionnel et les ventes réelles.",
+            "Renseignez vos identifiants pour charger le prévisionnel et les " +
+                "ventes réelles — l'URL du serveur vient de l'environnement.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        EnvBaseUrlLine("Serveur KPI", baseUrl)
         Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = baseUrl,
-            onValueChange = { baseUrl = it },
-            label = { Text("URL du serveur KPI") },
-            placeholder = { Text(defaultBaseUrl) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors(),
-        )
-        Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = user,
             onValueChange = { user = it },
@@ -95,8 +97,8 @@ fun KpiAuthPanel(
             colors = fieldColors(),
         )
         Spacer(Modifier.height(16.dp))
-        ConnectButton(connecting, enabled = baseUrl.isNotBlank() && user.isNotBlank() && password.isNotBlank()) {
-            onConnect(baseUrl, user, password)
+        ConnectButton(connecting, enabled = user.isNotBlank() && password.isNotBlank()) {
+            onConnect(user, password)
         }
         error?.let {
             Spacer(Modifier.height(12.dp))
@@ -112,46 +114,33 @@ fun KpiAuthPanel(
 
 /**
  * Panneau d'authentification ntfy, affiché par la page Notifications quand le
- * serveur n'est pas configuré : URL + topic + token (optionnel).
+ * serveur n'est pas configuré : topic (device id) seulement — l'URL ET le
+ * token viennent de l'environnement (env.json : *_BASE_URL / NTFY_TOKEN).
  */
 @Composable
 fun NtfyAuthPanel(
-    savedBaseUrl: String,
     savedTopic: String,
-    savedToken: String,
-    defaultBaseUrl: String,
+    baseUrl: String,
+    tokenAvailable: Boolean,
     error: String?,
-    onConnect: (baseUrl: String, topic: String, token: String) -> Unit,
+    onConnect: (topic: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // URL pré-remplie par défaut (valeur éditable) si rien n'est enregistré.
-    var baseUrl by remember(savedBaseUrl, defaultBaseUrl) {
-        mutableStateOf(savedBaseUrl.ifBlank { defaultBaseUrl })
-    }
     var topic by remember(savedTopic) { mutableStateOf(savedTopic) }
-    var token by remember(savedToken) { mutableStateOf(savedToken) }
 
     StatePanel(modifier) {
         Text("Connexion au serveur ntfy", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Renseignez l'URL du serveur, le topic (device id) et le token " +
-                "d'accès pour recevoir les notifications en temps réel.",
+            "Renseignez le topic (device id) pour recevoir les notifications " +
+                "en temps réel — l'URL du serveur et le token d'accès viennent " +
+                "de l'environnement.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        EnvBaseUrlLine("Serveur", baseUrl)
         Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = baseUrl,
-            onValueChange = { baseUrl = it },
-            label = { Text("URL du serveur") },
-            placeholder = { Text(defaultBaseUrl) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors(),
-        )
-        Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = topic,
             onValueChange = { topic = it },
@@ -161,21 +150,20 @@ fun NtfyAuthPanel(
             modifier = Modifier.fillMaxWidth(),
             colors = fieldColors(),
         )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = token,
-            onValueChange = { token = it },
-            label = { Text("Token ntfy (Bearer tk_…)") },
-            placeholder = { Text("tk_…") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors(),
-        )
+        if (!tokenAvailable) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Token ntfy introuvable dans l'environnement (NTFY_TOKEN) — " +
+                    "définissez-le puis relancez l'app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
         Spacer(Modifier.height(16.dp))
-        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank() && topic.isNotBlank()) {
-            onConnect(baseUrl, topic, token)
+        // Sans token dans l'environnement (serveur deny-all), connecter est inutile.
+        ConnectButton(connecting = false, enabled = topic.isNotBlank() && tokenAvailable) {
+            onConnect(topic)
         }
         error?.let {
             Spacer(Modifier.height(12.dp))
@@ -214,41 +202,28 @@ private fun ConnectButton(connecting: Boolean, enabled: Boolean, onClick: () -> 
 /**
  * Panneau de connexion traffic-inspector, affiché par la page Traffic quand le
  * serveur n'est pas configuré. L'API /ti-api est VPN-only (Caddy/WireGuard) et
- * s'authentifie par le token statique TI_API_TOKEN défini côté VPS.
+ * s'authentifie par le token statique TI_API_TOKEN défini côté VPS. URL comme
+ * token viennent de l'environnement : aucun champ de saisie.
  */
 @Composable
 fun TrafficAuthPanel(
-    savedBaseUrl: String,
-    defaultBaseUrl: String,
+    baseUrl: String,
     tokenAvailable: Boolean,
     error: String?,
-    onConnect: (baseUrl: String) -> Unit,
+    onConnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // URL pré-remplie par défaut (valeur éditable) si rien n'est enregistré.
-    var baseUrl by remember(savedBaseUrl, defaultBaseUrl) {
-        mutableStateOf(savedBaseUrl.ifBlank { defaultBaseUrl })
-    }
-
     StatePanel(modifier) {
         Text("Connexion à traffic-inspector", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Renseignez l'URL du serveur /ti-api (VPN-only via WireGuard).",
+            "L'URL du serveur /ti-api (VPN-only via WireGuard) et le token d'accès " +
+                "viennent de l'environnement.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = baseUrl,
-            onValueChange = { baseUrl = it },
-            label = { Text("URL du serveur") },
-            placeholder = { Text(defaultBaseUrl) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors(),
-        )
+        EnvBaseUrlLine("Serveur", baseUrl)
         if (!tokenAvailable) {
             Spacer(Modifier.height(8.dp))
             Text(
@@ -262,8 +237,62 @@ fun TrafficAuthPanel(
         Spacer(Modifier.height(16.dp))
         // Sans token TI dans l'environnement, connecter est inutile (401) :
         // le bouton attend que la variable TI_API_TOKEN soit fournie.
-        ConnectButton(connecting = false, enabled = baseUrl.isNotBlank() && tokenAvailable) {
-            onConnect(baseUrl)
+        ConnectButton(connecting = false, enabled = tokenAvailable) {
+            onConnect()
+        }
+        error?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+/**
+ * Panneau de connexion security-scanner, affiché par la page Sécurité quand le
+ * serveur n'est pas configuré. L'API /sc-api est VPN-only (Caddy/WireGuard) et
+ * s'authentifie par le token statique SC_API_TOKEN défini côté VPS. Pattern de
+ * [TrafficAuthPanel] : URL et token viennent de l'environnement.
+ */
+@Composable
+fun SecurityAuthPanel(
+    baseUrl: String,
+    tokenAvailable: Boolean,
+    error: String?,
+    onConnect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    StatePanel(modifier) {
+        Text("Connexion à security-scanner", style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Suivi des vulnérabilités des images des conteneurs du VPS : " +
+                "l'URL du serveur /sc-api (VPN-only via WireGuard) et le token " +
+                "d'accès viennent de l'environnement.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        EnvBaseUrlLine("Serveur", baseUrl)
+        if (!tokenAvailable) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Token SC introuvable dans l'environnement (SC_API_TOKEN) — " +
+                    "définissez-le puis relancez l'app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        // Sans token SC dans l'environnement, connecter est inutile (401) :
+        // le bouton attend que la variable SC_API_TOKEN soit fournie.
+        ConnectButton(connecting = false, enabled = tokenAvailable) {
+            onConnect()
         }
         error?.let {
             Spacer(Modifier.height(12.dp))

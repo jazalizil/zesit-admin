@@ -96,10 +96,9 @@ internal fun DefaultRealForecastScreen(
         // panneau d'authentification sur la page même. Une session en cours de
         // login (configurée, sans erreur) affiche une progression.
         !state.connected -> KpiAuthPanel(
-            savedBaseUrl = settings.kpiBaseUrl,
             savedUser = settings.kpiUser,
             savedPassword = settings.kpiPassword,
-            defaultBaseUrl = viewModel.env.kpiBaseUrlDefault,
+            baseUrl = viewModel.env.kpiBaseUrlDefault,
             connecting = state.configured && state.error == null,
             error = state.error,
             onConnect = viewModel::connectKpi,

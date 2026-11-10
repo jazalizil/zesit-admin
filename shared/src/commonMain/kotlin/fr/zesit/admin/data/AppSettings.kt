@@ -6,15 +6,16 @@ import kotlinx.serialization.Serializable
  * Réglages de connexion au serveur ntfy self-hosté, persistés localement
  * (voir [SettingsRepository]).
  *
- * @param baseUrl ex. "https://ntfy.example.com" (sans slash final)
- * @param topic nom du topic ntfy
- * @param token token d'accès ntfy (`tk_…`), null si le topic est public
+ * @param baseUrl ex. "https://ntfy.example.com" (sans slash final) — renseigné
+ *   par l'app depuis l'environnement, plus jamais saisi
+ * @param topic nom du topic ntfy (seule saisie de connexion ntfy) ; le token
+ *   d'accès vient de l'environnement (NTFY_TOKEN) et vit dans les secrets de
+ *   l'app, il n'est plus persisté ici
  */
 @Serializable
 data class AppSettings(
     val baseUrl: String = "",
     val topic: String = "",
-    val token: String? = null,
     // Connexion au serveur KPI (dashboard prévisionnel, API Flask kpi.zesit.fr)
     val kpiBaseUrl: String = "",
     val kpiUser: String = "",
@@ -22,8 +23,11 @@ data class AppSettings(
     // Connexion à traffic-inspector (/ti-api — VPN-only). Le token TI n'est pas
     // saisi : il vient de l'environnement et vit dans les secrets de l'app.
     val trafficBaseUrl: String = "",
+    // Connexion à security-scanner (/sc-api — VPN-only, vulnérabilités des
+    // conteneurs Trivy). Le token SC n'est pas saisi : même mécanique que TI.
+    val securityBaseUrl: String = "",
 ) {
-    /** true si baseUrl + topic sont renseignés (le token reste optionnel). */
+    /** true si baseUrl + topic sont renseignés. */
     val isConfigured: Boolean
         get() = baseUrl.isNotBlank() && topic.isNotBlank()
 
@@ -46,4 +50,12 @@ data class AppSettings(
     /** baseUrl traffic-inspector normalisée pour les appels API (sans slash final). */
     val normalizedTrafficBaseUrl: String
         get() = trafficBaseUrl.trim().trimEnd('/')
+
+    /** true si l'URL de security-scanner est renseignée (le token reste requis côté serveur). */
+    val isSecurityConfigured: Boolean
+        get() = securityBaseUrl.isNotBlank()
+
+    /** baseUrl security-scanner normalisée pour les appels API (sans slash final). */
+    val normalizedSecurityBaseUrl: String
+        get() = securityBaseUrl.trim().trimEnd('/')
 }

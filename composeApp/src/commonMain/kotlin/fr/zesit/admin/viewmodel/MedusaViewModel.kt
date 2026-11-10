@@ -184,10 +184,12 @@ class MedusaViewModel(
      * Connexion depuis la page Réel / Prévisionnel (même session KPI que la
      * page KPI) : enregistre les identifiants puis relance la session.
      */
-    fun connectKpi(baseUrl: String, user: String, password: String) {
+    fun connectKpi(user: String, password: String) {
+        // L'URL du serveur vient de l'environnement (env.json → AppEnv), elle
+        // n'est plus saisie dans le panneau de connexion.
         container.settingsRepository.save(
             container.settingsRepository.appSettings.value.copy(
-                kpiBaseUrl = baseUrl.trim().trimEnd('/'),
+                kpiBaseUrl = container.env.kpiBaseUrlDefault.trim().trimEnd('/'),
                 kpiUser = user.trim(),
                 kpiPassword = password,
             ),

@@ -12,12 +12,13 @@ import fr.zesit.admin.ntfy.NtfyApi
 class ApnsRegistrar(
     private val api: NtfyApi,
     private val settings: AppSettings,
+    private val token: String?,
 ) {
     suspend fun register(deviceTokenHex: String) {
         if (!settings.isConfigured) return
         api.registerApnsDevice(
             baseUrl = settings.baseUrl,
-            token = settings.token,
+            token = token,
             apnsDeviceToken = deviceTokenHex,
             environment = apnsEnvironment(),
             topics = listOf(settings.topic),

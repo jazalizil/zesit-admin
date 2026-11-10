@@ -242,10 +242,12 @@ class KpiViewModel(private val container: AppContainer) : ViewModel() {
      * Connexion depuis la page KPI (état non connecté) : enregistre les
      * identifiants puis relance la session (login automatique par KpiSession).
      */
-    fun connectKpi(baseUrl: String, user: String, password: String) {
+    fun connectKpi(user: String, password: String) {
+        // L'URL du serveur vient de l'environnement (env.json → AppEnv), elle
+        // n'est plus saisie dans le panneau de connexion.
         container.settingsRepository.save(
             container.settingsRepository.appSettings.value.copy(
-                kpiBaseUrl = baseUrl.trim().trimEnd('/'),
+                kpiBaseUrl = container.env.kpiBaseUrlDefault.trim().trimEnd('/'),
                 kpiUser = user.trim(),
                 kpiPassword = password,
             ),

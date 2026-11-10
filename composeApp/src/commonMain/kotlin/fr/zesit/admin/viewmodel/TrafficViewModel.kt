@@ -118,11 +118,11 @@ class TrafficViewModel(private val container: AppContainer) : ViewModel() {
 
     // --- Connexion / déconnexion ---
 
-    /** Connexion depuis la page Traffic : URL seule — le token vient de l'environnement (secrets). */
-    fun connect(baseUrl: String) {
+    /** Connexion depuis la page Traffic : URL et token viennent de l'environnement (aucune saisie). */
+    fun connect() {
         val current = container.settingsRepository.appSettings.value
         container.settingsRepository.save(
-            current.copy(trafficBaseUrl = baseUrl.trim().trimEnd('/')),
+            current.copy(trafficBaseUrl = container.env.trafficBaseUrlDefault.trim().trimEnd('/')),
         )
     }
 

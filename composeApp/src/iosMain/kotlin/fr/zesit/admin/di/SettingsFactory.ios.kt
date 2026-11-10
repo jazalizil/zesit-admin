@@ -1,9 +1,11 @@
 package fr.zesit.admin.di
 
+import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
 
 // Keychain : réglages (avec le token ntfy) stockés comme mots de passe génériques.
+@OptIn(ExperimentalSettingsImplementation::class)
 internal actual fun createSecureSettings(): Settings =
     KeychainSettings(service = "fr.zesit.admin.settings")
 

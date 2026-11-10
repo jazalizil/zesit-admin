@@ -82,13 +82,13 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
     /** Poll initial (historique) puis WebSocket temps réel. */
     private suspend fun syncThenListen(settings: AppSettings) {
         try {
-            val history = api.poll(settings.baseUrl, settings.topic, settings.token, sinceId = null)
+            val history = api.poll(settings.baseUrl, settings.topic, container.secrets.ntfyAccessToken(), sinceId = null)
             container.notificationRepository.addAll(history)
             _uiState.value = _uiState.value.copy(lastError = null)
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(lastError = e.message)
         }
-        api.connect(settings.baseUrl, settings.topic, settings.token).collect { event ->
+        api.connect(settings.baseUrl, settings.topic, container.secrets.ntfyAccessToken()).collect { event ->
             when (event) {
                 NtfyEvent.Connected ->
                     _uiState.value = _uiState.value.copy(connected = true)
@@ -115,7 +115,7 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
                 val missed = api.poll(
                     settings.baseUrl,
                     settings.topic,
-                    settings.token,
+                    container.secrets.ntfyAccessToken(),
                     sinceId = container.notificationRepository.lastMessageId,
                 )
                 container.notificationRepository.addAll(missed)
@@ -132,22 +132,28 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
         container.settingsRepository.save(newSettings)
     }
 
-    /** Connexion ntfy depuis la page Notifications (état non connecté). */
-    fun connectNtfy(baseUrl: String, topic: String, token: String) {
+    /**
+     * Connexion ntfy depuis la page Notifications (état non connecté) : seul le
+     * topic est saisi — l'URL vient de l'environnement, le token (NTFY_TOKEN)
+     * est résolu via les secrets installés par AppContainer.
+     */
+    fun connectNtfy(topic: String) {
         val current = container.settingsRepository.appSettings.value
         container.settingsRepository.save(
             current.copy(
-                baseUrl = baseUrl.trim().trimEnd('/'),
+                baseUrl = container.env.ntfyBaseUrlDefault.trim().trimEnd('/'),
                 topic = topic.trim(),
-                token = token.trim().ifBlank { null },
             ),
         )
     }
 
+    /** true si le token ntfy est disponible (installé depuis l'environnement). */
+    fun hasSecretToken(): Boolean = !container.secrets.ntfyAccessToken().isNullOrBlank()
+
     /** Déconnexion ntfy (bouton power de la page Notifications) : efface les réglages ntfy. */
     fun disconnectNtfy() {
         val current = container.settingsRepository.appSettings.value
-        container.settingsRepository.save(current.copy(baseUrl = "", topic = "", token = null))
+        container.settingsRepository.save(current.copy(baseUrl = "", topic = ""))
     }
 
     /** Change le mode d'apparence (écran Réglages) : Système / Clair / Sombre. */
@@ -172,7 +178,7 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
     fun testConnection(settings: AppSettings, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
-                val ok = api.checkAccess(settings.baseUrl, settings.topic, settings.token)
+                val ok = api.checkAccess(settings.baseUrl, settings.topic, container.secrets.ntfyAccessToken())
                 onResult(ok, if (ok) null else "HTTP non 2xx — topic inaccessible")
             } catch (e: Exception) {
                 onResult(false, e.message)
@@ -189,7 +195,7 @@ class NotificationsViewModel(private val container: AppContainer) : ViewModel() 
         val settings = currentSettings ?: return
         viewModelScope.launch {
             try {
-                ApnsRegistrar(api, settings).register(tokenHex)
+                ApnsRegistrar(api, settings, container.secrets.ntfyAccessToken()).register(tokenHex)
                 _uiState.value = _uiState.value.copy(
                     apnsStatus = "APNs enregistré (${apnsEnvLabel()}) — push natif actif",
                 )

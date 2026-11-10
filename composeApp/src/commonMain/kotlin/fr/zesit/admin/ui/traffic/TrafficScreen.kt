@@ -82,13 +82,11 @@ internal fun DefaultTrafficScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsState()
-    val settings by viewModel.settings.collectAsState()
 
     when {
         // Serveur non configuré : panneau de connexion sur la page même.
         !state.configured -> TrafficAuthPanel(
-            savedBaseUrl = settings.trafficBaseUrl,
-            defaultBaseUrl = viewModel.env.trafficBaseUrlDefault,
+            baseUrl = viewModel.env.trafficBaseUrlDefault,
             tokenAvailable = viewModel.hasSecretToken(),
             error = state.error,
             onConnect = viewModel::connect,

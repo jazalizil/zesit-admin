@@ -32,8 +32,9 @@ import fr.zesit.admin.model.Notification
 import fr.zesit.admin.ui.common.NtfyAuthPanel
 import fr.zesit.admin.viewmodel.NotificationsUiState
 import fr.zesit.admin.viewmodel.NotificationsViewModel
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 
 /**
@@ -59,10 +60,9 @@ internal fun DefaultNotificationsScreen(
         // Serveur ntfy non configuré : panneau de connexion sur la page même
         // (remplace l'ancien renvoi vers les Réglages).
         !state.configured -> NtfyAuthPanel(
-            savedBaseUrl = settings.baseUrl,
             savedTopic = settings.topic,
-            savedToken = settings.token.orEmpty(),
-            defaultBaseUrl = viewModel.env.ntfyBaseUrlDefault,
+            baseUrl = viewModel.env.ntfyBaseUrlDefault,
+            tokenAvailable = viewModel.hasSecretToken(),
             error = state.lastError,
             onConnect = viewModel::connectNtfy,
             modifier = modifier,
@@ -190,5 +190,5 @@ private fun PriorityBadge(priority: Int) {
 private fun formatTime(epochSeconds: Long): String {
     val dt = Instant.fromEpochSeconds(epochSeconds).toLocalDateTime(TimeZone.currentSystemDefault())
     fun pad(n: Int) = n.toString().padStart(2, '0')
-    return "${pad(dt.dayOfMonth)}/${pad(dt.monthNumber)}/${dt.year} ${pad(dt.hour)}:${pad(dt.minute)}"
+    return "${pad(dt.day)}/${pad(dt.month.number)}/${dt.year} ${pad(dt.hour)}:${pad(dt.minute)}"
 }

@@ -14,6 +14,7 @@
 		C0DE00000000000000000005 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000015 /* Preview Assets.xcassets */; };
 		C0DE00000000000000000006 /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000016 /* ComposeApp.framework */; };
 		C0DE00000000000000000007 /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000016 /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C0DE0000000000000000001C /* compose-resources in Resources */ = {isa = PBXBuildFile; fileRef = C0DE0000000000000000001B /* compose-resources */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +41,8 @@
 		C0DE00000000000000000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C0DE00000000000000000018 /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
 		C0DE00000000000000000019 /* Zesit Admin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zesit Admin.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DE0000000000000000001A /* Env.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Env.xcconfig; sourceTree = "<group>"; };
+		C0DE0000000000000000001B /* compose-resources */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "compose-resources"; path = "../composeApp/build/ios-app-resources/compose-resources"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +75,8 @@
 				C0DE00000000000000000012 /* ContentView.swift */,
 				C0DE00000000000000000017 /* Info.plist */,
 				C0DE00000000000000000018 /* iosApp.entitlements */,
+				C0DE0000000000000000001A /* Env.xcconfig */,
+				C0DE0000000000000000001B /* compose-resources */,
 				C0DE00000000000000000024 /* Preview Content */,
 			);
 			path = iosApp;
@@ -162,6 +167,7 @@
 			files = (
 				C0DE00000000000000000004 /* Assets.xcassets in Resources */,
 				C0DE00000000000000000005 /* Preview Assets.xcassets in Resources */,
+				C0DE0000000000000000001C /* compose-resources in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,9 +187,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			// Xcode lance les Run Script avec un PATH minimal ("java" introuvable)
-			// : on exporte JAVA_HOME (sdkman -> JBR Android Studio -> java_home)
-			// avant ./gradlew, comme dans l'app ToyotaObd
 			shellScript = "\"${SRCROOT}/gradle-build.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -252,8 +255,10 @@
 		};
 		C0DE00000000000000000062 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C0DE0000000000000000001A /* Env.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -267,6 +272,7 @@
 				);
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -286,8 +292,10 @@
 		};
 		C0DE00000000000000000063 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C0DE0000000000000000001A /* Env.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -299,6 +307,7 @@
 				);
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

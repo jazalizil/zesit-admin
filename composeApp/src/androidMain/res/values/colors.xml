@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1A2027</color>
+    <!-- Fond de l'icône adaptative : crème du bord de l'AppIcon (les coins
+         transparents du foreground rond laissent voir cette couleur). -->
+    <color name="ic_launcher_background">#F2F5E0</color>
 </resources>

@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** Largeur du panneau plié (rail d'icônes) et déplié. */
-private val PanelWidthExpanded = 240.dp
+private val PanelWidthExpanded = 280.dp
 private val PanelWidthCollapsed = 92.dp
 
 /**
@@ -122,11 +122,11 @@ internal fun SideMenu(
         // (translation animée en même temps que le fondu des libellés).
         Row(verticalAlignment = Alignment.CenterVertically) {
             // Décalage du logo vers le centre du rail plié (0 déplié).
-            val logoSlide = 1f - labelAlpha
             Box(
+
                 modifier = Modifier
-                    .graphicsLayer { translationX = 9.dp.toPx() * logoSlide }
-                    .size(42.dp)
+                    .size(58.dp)
+                    .padding(10.dp)
                     .background(scheme.primary, RoundedCornerShape(13.dp)),
                 contentAlignment = Alignment.Center,
             ) {
@@ -164,15 +164,22 @@ internal fun SideMenu(
         )
         Spacer(Modifier.height(10.dp))
 
-        DashboardSection.entries.forEach { dest ->
+        val dsIterator = DashboardSection.entries.iterator()
+
+        DashboardSection.entries.forEach {
             SideMenuItem(
-                icon = dest.icon,
-                label = dest.label,
-                caption = dest.description,
-                selected = selected == dest && !settingsOpen,
+                icon = it.icon,
+                // Libellé long sur desktop (menu large) — compact (label) côté mobile.
+                label = it.longLabel,
+                caption = it.description,
+                selected = selected == it && !settingsOpen,
+                expanded = expanded,
                 labelAlpha = labelAlpha,
-                onClick = { onSelectSection(dest) },
+                onClick = { onSelectSection(it) },
             )
+            if (dsIterator.hasNext()) {
+                Spacer(Modifier.height(12.dp))
+            }
         }
 
         Spacer(Modifier.weight(1f))
@@ -185,6 +192,7 @@ internal fun SideMenu(
             selected = settingsOpen,
             labelAlpha = labelAlpha,
             onClick = onToggleSettings,
+            expanded = expanded,
         )
     }
 }
@@ -205,6 +213,7 @@ private fun SideMenuItem(
     selected: Boolean,
     labelAlpha: Float,
     onClick: () -> Unit,
+    expanded: Boolean
 ) {
     val scheme = MaterialTheme.colorScheme
     val selectedContainer = scheme.inverseSurface
@@ -231,6 +240,7 @@ private fun SideMenuItem(
             .clickable(interactionSource = hoverInteraction, indication = null) { onClick() }
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (expanded) Arrangement.Start else Arrangement.Center,
     ) {
         Box(
             modifier = Modifier

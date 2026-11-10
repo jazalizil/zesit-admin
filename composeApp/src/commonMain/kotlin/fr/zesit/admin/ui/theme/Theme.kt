@@ -126,6 +126,8 @@ fun ZesitAdminTheme(
     ) {
         MaterialTheme(
             colorScheme = if (darkTheme) ZesitDarkColors else ZesitLightColors,
+            // Police par défaut : Montserrat sur tous les styles Material 3.
+            typography = montserratTypography(),
             shapes = ZesitShapes,
             content = content,
         )

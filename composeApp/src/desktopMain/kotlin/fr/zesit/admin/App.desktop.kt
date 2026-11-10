@@ -27,12 +27,14 @@ import fr.zesit.admin.ui.nav.DashboardSection
 import fr.zesit.admin.ui.nav.SideMenu
 import fr.zesit.admin.ui.notifications.NotificationsScreen
 import fr.zesit.admin.ui.realforecast.RealForecastScreen
+import fr.zesit.admin.ui.security.SecurityScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
 import fr.zesit.admin.ui.traffic.TrafficScreen
 import fr.zesit.admin.ui.theme.ZesitAdminTheme
 import fr.zesit.admin.viewmodel.KpiViewModel
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import fr.zesit.admin.viewmodel.NotificationsViewModel
+import fr.zesit.admin.viewmodel.SecurityViewModel
 import fr.zesit.admin.viewmodel.TrafficViewModel
 
 /**
@@ -61,6 +63,8 @@ actual fun App(container: AppContainer) {
             viewModel { MedusaViewModel(container, kpiViewModel.currentInputs) }
         val trafficViewModel: TrafficViewModel =
             viewModel { TrafficViewModel(container) }
+        val securityViewModel: SecurityViewModel =
+            viewModel { SecurityViewModel(container) }
 
         // Navigation du dashboard : KPI (accueil), Réel/Prévisionnel, Notifications
         var section by remember { mutableStateOf(DashboardSection.Kpi) }
@@ -96,7 +100,7 @@ actual fun App(container: AppContainer) {
             ) {
                 // En-tête de la section (pas de TopAppBar : le menu fait office de barre)
                 Text(
-                    if (showSettings) "Réglages" else section.label,
+                    if (showSettings) "Réglages" else section.longLabel,
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -135,6 +139,12 @@ actual fun App(container: AppContainer) {
                     )
                     section == DashboardSection.Traffic -> TrafficScreen(
                         viewModel = trafficViewModel,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                    )
+                    section == DashboardSection.Security -> SecurityScreen(
+                        viewModel = securityViewModel,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),

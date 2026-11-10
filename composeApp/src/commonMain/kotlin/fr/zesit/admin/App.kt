@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.zesit.admin.bridge.ApnsBridge
@@ -38,11 +39,13 @@ import fr.zesit.admin.ui.notifications.NotificationsScreen
 import fr.zesit.admin.ui.realforecast.RealForecastScreen
 import fr.zesit.admin.ui.settings.SettingsScreen
 import fr.zesit.admin.ui.traffic.TrafficScreen
+import fr.zesit.admin.ui.security.SecurityScreen
 import fr.zesit.admin.ui.theme.ZesitAdminTheme
 import fr.zesit.admin.viewmodel.KpiViewModel
 import fr.zesit.admin.viewmodel.MedusaViewModel
 import fr.zesit.admin.viewmodel.NotificationsViewModel
 import fr.zesit.admin.viewmodel.TrafficViewModel
+import fr.zesit.admin.viewmodel.SecurityViewModel
 
 /**
  * Racine de l'app (thème + ViewModels + navigation + sections du dashboard).
@@ -71,6 +74,8 @@ internal fun DefaultApp(container: AppContainer) {
             viewModel { MedusaViewModel(container, kpiViewModel.currentInputs) }
         val trafficViewModel: TrafficViewModel =
             viewModel { TrafficViewModel(container) }
+        val securityViewModel: SecurityViewModel =
+            viewModel { SecurityViewModel(container) }
 
         // Branche le pont APNs : l'AppDelegate Swift pousse le device token ici (iOS uniquement)
         DisposableEffect(Unit) {
@@ -113,7 +118,7 @@ internal fun DefaultApp(container: AppContainer) {
                                     selected = section == dest,
                                     onClick = { section = dest },
                                     icon = { Icon(dest.icon, contentDescription = dest.label) },
-                                    label = { Text(dest.label) },
+                                    label = { Text(dest.label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                 )
                             }
                         }
@@ -166,6 +171,10 @@ internal fun DefaultApp(container: AppContainer) {
                         )
                         section == DashboardSection.Traffic -> TrafficScreen(
                             viewModel = trafficViewModel,
+                            modifier = Modifier.weight(1f),
+                        )
+                        section == DashboardSection.Security -> SecurityScreen(
+                            viewModel = securityViewModel,
                             modifier = Modifier.weight(1f),
                         )
                     }

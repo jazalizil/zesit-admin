@@ -12,6 +12,8 @@ import fr.zesit.admin.ntfy.NtfyApi
 import fr.zesit.admin.ntfy.createNtfyApi
 import fr.zesit.admin.traffic.TrafficApi
 import fr.zesit.admin.traffic.createTrafficApi
+import fr.zesit.admin.security.SecurityApi
+import fr.zesit.admin.security.createSecurityApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,15 +41,24 @@ class AppContainer {
     // Dashboard d'analyse du trafic (traffic-inspector /ti-api — VPN-only).
     val trafficApi: TrafficApi = createTrafficApi()
 
-    // Secrets de l'app : token TI installé depuis l'env plateforme, sur stockage sécurisé.
+    // Scanner de vulnérabilités des conteneurs (security-scanner /sc-api — VPN-only).
+    val securityApi: SecurityApi = createSecurityApi()
+
+    // Secrets de l'app : tokens TI/SC installés depuis l'env plateforme, sur stockage sécurisé.
     val secrets = SecretsStore(secureSettings)
 
-    // Environnement d'exécution : commun + spécialités de la plateforme. Le
-    // token TI de l'env est (ré)installé dans les secrets dès qu'il diffère —
-    // l'environnement prime sur un secret périmé (rotation de TI_API_TOKEN).
+    // Environnement d'exécution : commun + spécialités de la plateforme. Les
+    // tokens de l'env sont (ré)installés dans les secrets dès qu'ils diffèrent —
+    // l'environnement prime sur un secret périmé (rotation des *_API_TOKEN / NTFY_TOKEN).
     val env: AppEnv = platformEnv().also { env ->
         if (!env.trafficToken.isNullOrBlank() && secrets.trafficApiToken() != env.trafficToken) {
             secrets.saveTrafficApiToken(env.trafficToken)
+        }
+        if (!env.securityToken.isNullOrBlank() && secrets.securityApiToken() != env.securityToken) {
+            secrets.saveSecurityApiToken(env.securityToken)
+        }
+        if (!env.ntfyToken.isNullOrBlank() && secrets.ntfyAccessToken() != env.ntfyToken) {
+            secrets.saveNtfyAccessToken(env.ntfyToken)
         }
     }
 

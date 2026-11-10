@@ -21,6 +21,11 @@ package fr.zesit.admin.di
  * @param trafficToken token TI (TI_API_TOKEN du VPS) fourni par la plateforme
  *   (variable d'env TI_API_TOKEN sur desktop/iOS, propriété Gradle TI_API_TOKEN
  *   sur Android) — installé dans les secrets de l'app par AppContainer si absent
+ * @param securityBaseUrlDefault URL par défaut de security-scanner (/sc-api)
+ * @param securityToken token SC (SC_API_TOKEN du VPS), même mécanique que
+ *   [trafficToken] — installé dans les secrets de l'app par AppContainer
+ * @param ntfyToken token ntfy (NTFY_TOKEN, bearer `tk_…`), même mécanique que
+ *   [trafficToken] — installé dans les secrets de l'app par AppContainer
  * @param apnsLabel environnement APNs sur iOS ("sandbox"/"production"), null ailleurs
  * @param deviceInfo fiche technique de l'appareil/hôte (OS, modèle, runtime)
  */
@@ -33,6 +38,9 @@ data class AppEnv(
     val ntfyBaseUrlDefault: String = "https://ntfy.zesit.fr",
     val trafficBaseUrlDefault: String = "https://traffic.zesit.fr",
     val trafficToken: String? = null,
+    val securityBaseUrlDefault: String = "https://security.zesit.fr",
+    val securityToken: String? = null,
+    val ntfyToken: String? = null,
     val apnsLabel: String? = null,
     val deviceInfo: String? = null,
 )
@@ -46,3 +54,12 @@ fun commonEnv(): AppEnv = AppEnv(platform = "common")
 
 /** Env effectif de la plateforme : fusion du commun + spécificités de l'actual. */
 expect fun platformEnv(): AppEnv
+
+/**
+ * Surcharge d'URL d'environnement (KPI/NTFY/TRAFFIC_BASE_URL) : valable
+ * uniquement si complète (http(s)://…) — une valeur tronquée ou vide retombe
+ * sur le défaut du code (les fichiers d'env peuvent être vides ou mal
+ * renseignés).
+ */
+internal fun envBaseUrl(raw: String?): String? =
+    raw?.trim()?.takeUnless { it.isBlank() }?.takeIf { it.startsWith("http://") || it.startsWith("https://") }

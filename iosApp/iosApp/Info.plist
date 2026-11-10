@@ -12,23 +12,37 @@
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>KPI_BASE_URL</key>
+	<string>$(KPI_BASE_URL)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
+	<key>NTFY_BASE_URL</key>
+	<string>$(NTFY_BASE_URL)</string>
+	<key>NTFY_TOKEN</key>
+	<string>$(NTFY_TOKEN)</string>
+	<key>TI_API_TOKEN</key>
+	<string>$(TI_API_TOKEN)</string>
+	<key>SC_API_TOKEN</key>
+	<string>$(SC_API_TOKEN)</string>
+	<key>TRAFFIC_BASE_URL</key>
+	<string>$(TRAFFIC_BASE_URL)</string>
+	<key>SECURITY_BASE_URL</key>
+	<string>$(SECURITY_BASE_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>UIRequiresFullScreen</key>
-	<true/>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

@@ -100,15 +100,70 @@ Si aucun des 4 chemins ne fournit de JDK, installez-en un : SDKMAN
 enregistré (`/usr/libexec/java_home` doit répondre, ex. .dmg Temurin ou
 `brew install openjdk@17` + lien dans `/Library/Java/JavaVirtualMachines`).
 
+## Variables d'environnement (iOS & desktop)
+
+L'app lit ses secrets/URLs (token TI de traffic-inspector, token SC de
+security-scanner, URLs par défaut des panneaux) dans l'environnement du
+process **en priorité**, sinon dans des fichiers d'env locaux — **jamais
+commités**.
+
+### Générateur : `./gradlew generateEnv`
+
+Source unique **`env.json`** (racine, ignoré par Git ; modèle
+`env.json.example`) — les clés de `common` s'appliquent aux trois plateformes,
+surchargeables clé par clé dans chaque section :
+
+```json
+{ "common": { "TI_API_TOKEN": "…", "SC_API_TOKEN": "…" }, "android": {}, "desktop": {}, "ios": {} }
+```
+
+`./gradlew generateEnv` régénère les fichiers d'env de toutes les plateformes
+(valeur vide ou absente = réglage par défaut du code) :
+
+| Sortie | Consommateur |
+|---|---|
+| `desktop.env` (racine) | lu au lancement par `DesktopEnvFile`, sans exports du shell (IDEA, `.app`) ; cherché aussi via `$ZESIT_DESKTOP_ENV` puis `~/.zesit-admin/desktop.env` |
+| `iosApp/iosApp/Env.local.xcconfig` | chargé par `Env.xcconfig` (attaché à la cible Xcode) → clés figées dans l'Info.plist du `.app` ; le générateur échappe les URLs `//` → `$(SLASH)` (« // » ouvre un commentaire en xcconfig) |
+| `composeApp/env-android.properties` | valeurs du BuildConfig Android (priorité : propriété Gradle > variable d'env > ce fichier) |
+
+### Fichiers Env générés (table des rôles)
+
+La **table des rôles** (clé d'env → champ `AppEnv` surchargé) vit dans le
+`build.gradle.kts` racine et est la source de vérité de la consommation
+applicative : `generateEnv` en dérive les fichiers **commités, marqués
+« GÉNÉRÉ — NE PAS ÉDITER »** :
+
+- `composeApp/src/commonMain/.../di/EnvOverrides.kt` — `withEnvOverrides(lookup)` :
+  les trois `EnvFactory.*.kt` (fins et stables) ne font que fournir leur
+  résolution (process > Info.plist sur iOS, process > desktop.env sur desktop,
+  BuildConfig sur Android) ;
+- `composeApp/src/androidMain/.../di/AndroidEnv.kt` — mapping clé → champ
+  BuildConfig (lui-même généré depuis la même table par
+  `composeApp/build.gradle.kts`).
+
+Ajouter une variable d'env à l'app = **une ligne dans la table des rôles + une
+entrée dans `env.json` + `./gradlew generateEnv`** — aucun des fichiers
+`EnvFactory`, Info.plist ni buildConfigField à retoucher à la main.
+
+Clés : `TI_API_TOKEN`, `SC_API_TOKEN`, `NTFY_TOKEN`, `KPI_BASE_URL`,
+`NTFY_BASE_URL`, `TRAFFIC_BASE_URL`, `SECURITY_BASE_URL` (partout) et
+`ZESIT_DEBUG=1` (desktop uniquement). L'environnement du process (variables du
+schéma de run Xcode, exports du shell) reste prioritaire sur tous ces
+fichiers ; la variable `TI_API_TOKEN` du schéma Xcode peut donc en être retirée.
+
 ## Configurer l'app (premier lancement)
 
-1. Ouvrir les réglages (⚙) :
-   - **URL** : `https://ntfy.zesit.fr` (défaut, = `ntfy.$ZESIT_DOMAIN`)
-   - **Topic** : le device id, ex. `zesit-3f9a1c7e04b2d8e5f6a0` (un par device,
-     listé dans `DEVICE_TOPICS` du `.env` racine)
-   - **Token** : `tk_…` (bearer ntfy, obligatoire car `deny-all`)
-2. « Tester la connexion » doit répondre ✓.
-3. Sur iOS : autoriser les notifications à l'invite ; le device token APNs est alors
+Les panneaux de connexion ne demandent presque plus rien : les **URLs et les
+tokens (TI, SC, ntfy) viennent de l'environnement** (`env.json` +
+`./gradlew generateEnv`, voir plus haut) — plus aucun champ URL ni token à saisir.
+
+1. Page KPI / Réel / Prévisionnel : identifiants seulement (l'URL vient de l'env).
+2. Page Notifications : le **topic** (device id) seulement, ex.
+   `zesit-3f9a1c7e04b2d8e5f6a0` (un par device, listé dans `DEVICE_TOPICS` du
+   `.env` racine) ; le bearer ntfy (`NTFY_TOKEN`, obligatoire car `deny-all`)
+   vient de l'env. Sans lui, le bouton est désactivé et le panneau l'explique.
+3. Pages Traffic / Sécurité : aucun champ — tout vient de l'env.
+4. Sur iOS : autoriser les notifications à l'invite ; le device token APNs est alors
    enregistré automatiquement (`POST /v1/apns`, visible dans le bandeau de statut).
 
 ## Envoyer une notif de test

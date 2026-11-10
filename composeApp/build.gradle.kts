@@ -48,6 +48,8 @@ kotlin {
             // dans son header ObjC les déclarations publiques de shared, notamment
             // ApnsBridge (appelé depuis l'AppDelegate Swift).
             api(project(":shared"))
+            // API des ressources Compose (Res.font.* Montserrat) pour le code généré.
+            implementation(compose.components.resources)
             implementation(libs.ktor.client.core)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
@@ -74,17 +76,37 @@ kotlin {
                 implementation(libs.slf4j.simple)
             }
         }
+        // Tests desktop : parseur desktop.env (DesktopEnvFile) + garde-fous d'URL (EnvFactory).
+        named("desktopTest") {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 
-compose.desktop {
-    application {
-        mainClass = "fr.zesit.admin.MainKt"
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "Zesit Admin"
-            packageVersion = "1.0.0"
-            description = "Administration des notifications ntfy (Zesit)"
+compose {
+    // Polices par défaut (Montserrat) : classe Res générée pour les ressources
+    // composeResources/fonts/ — fontes versées dans les builds des 3 plateformes.
+    resources {
+        packageOfResClass = "fr.zesit.admin"
+        generateResClass = always
+    }
+
+    desktop {
+        application {
+            mainClass = "fr.zesit.admin.MainKt"
+            nativeDistributions {
+                targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+                packageName = "Zesit Admin"
+                packageVersion = "1.0.0"
+                description = "Administration des notifications ntfy (Zesit)"
+                // Icône du .app/.dmg (macOS) — AppIcon.icns dérivé du même
+                // artwork que les icônes iOS/Android.
+                macOS {
+                    iconFile.set(project.file("packaging/AppIcon.icns"))
+                }
+            }
         }
     }
 }
@@ -100,15 +122,38 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        // Token TI (AppEnv.trafficToken / SecretsStore) — fourni par la propriété
-        // Gradle TI_API_TOKEN (gradle.properties, non commitée) ou la variable d'environnement.
-        buildConfigField(
-            "String",
-            "TI_API_TOKEN",
-            "\"" + (providers.gradleProperty("TI_API_TOKEN")
-                .orElse(providers.environmentVariable("TI_API_TOKEN"))
-                .getOrElse("")) + "\"",
-        )
+        // Jetons/URLs d'env (AppEnv via EnvOverrides.kt/AndroidEnv.kt générés par
+        // ./gradlew generateEnv) : un buildConfigField par clé de la table des
+        // rôles (partagée par le build racine via extraProperties, union avec
+        // les clés du env-android.properties généré). Priorité : propriété
+        // Gradle > variable d'environnement > env-android.properties (ignoré par Git).
+        val envRoleKeys: List<String> = rootProject.extensions.extraProperties
+            .run { if (has("zesitEnvKeys")) get("zesitEnvKeys") else null }
+            .let { keys -> (keys as? List<*>).orEmpty().map { it.toString() } }
+        val generatedAndroidEnv: Map<String, String> = runCatching {
+            val propsFile = file("env-android.properties")
+            if (!propsFile.isFile) {
+                emptyMap()
+            } else {
+                propsFile.readLines().mapNotNull { line ->
+                    val trimmed = line.trim()
+                    val sep = trimmed.indexOfFirst { it == '=' }
+                    if (trimmed.isEmpty() || trimmed.startsWith("#") || sep <= 0) {
+                        null
+                    } else {
+                        trimmed.substring(0, sep).trim() to trimmed.substring(sep + 1).trim()
+                    }
+                }.toMap()
+            }
+        }.getOrDefault(emptyMap())
+        fun envOrGenerated(key: String): String =
+            providers.gradleProperty(key)
+                .orElse(providers.environmentVariable(key))
+                .orElse(providers.provider { generatedAndroidEnv[key] })
+                .getOrElse("")
+        (envRoleKeys + generatedAndroidEnv.keys).distinct().forEach { key ->
+            buildConfigField("String", key, "\"" + envOrGenerated(key) + "\"")
+        }
     }
     packaging {
         resources {

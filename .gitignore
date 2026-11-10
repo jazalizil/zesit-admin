@@ -13,3 +13,9 @@ project.xcworkspace/
 composeApp/build/
 shared/build/
 iosApp/build/
+
+# Variables d'environnement locales (secrets) — modèles *.example commités
+/desktop.env
+iosApp/iosApp/Env.local.xcconfig
+composeApp/env-android.properties
+env.json
